@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Add this to ensure the background fills the screen */
+
+body {
+  margin: 0;
+}
