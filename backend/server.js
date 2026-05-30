@@ -26,6 +26,14 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Stripping Vercel multi-service routing prefix if present
+app.use((req, res, next) => {
+  if (req.url.startsWith('/_/backend')) {
+    req.url = req.url.substring('/_/backend'.length);
+  }
+  next();
+});
+
 app.use('/api/metrics',      metricRoutes);
 app.use('/api/users',        userRoutes);
 app.use('/api/health',       healthRoutes);
