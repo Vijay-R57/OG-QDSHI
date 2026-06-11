@@ -1,4 +1,5 @@
 {
+  "name": "qdsharcolab",
   "experimentalServices": {
     "frontend": {
       "root": "frontend",
