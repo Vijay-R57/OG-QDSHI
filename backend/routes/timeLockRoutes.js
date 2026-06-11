@@ -18,17 +18,30 @@ router.get('/:dept/:shift', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// POST upsert (superadmin sets/updates a lock)
+// POST upsert (superadmin sets/updates one or many locks)
 router.post('/', async (req, res) => {
-  const { dept, shift, startTime, endTime, enabled } = req.body;
-  if (!dept || !shift || !startTime || !endTime)
-    return res.status(400).json({ error: 'dept, shift, startTime, endTime required' });
-  try {
-    const lock = await TimeLock.findOneAndUpdate(
-      { dept, shift },
-      { $set: { startTime, endTime, enabled: enabled !== undefined ? enabled : true } },
+  const { locks, dept, shift, startTime, endTime, enabled } = req.body;
+
+  const saveLock = async (lockPayload) => {
+    const { dept: d, shift: s, startTime: st, endTime: et, enabled: en } = lockPayload;
+    if (!d || !s || !st || !et) throw new Error('dept, shift, startTime, endTime required');
+    return await TimeLock.findOneAndUpdate(
+      { dept: d, shift: s },
+      { $set: { startTime: st, endTime: et, enabled: en !== undefined ? en : true } },
       { upsert: true, new: true }
     );
+  };
+
+  try {
+    if (Array.isArray(locks)) {
+      const results = await Promise.all(locks.map(saveLock));
+      return res.json(results);
+    }
+
+    if (!dept || !shift || !startTime || !endTime)
+      return res.status(400).json({ error: 'dept, shift, startTime, endTime required' });
+
+    const lock = await saveLock({ dept, shift, startTime, endTime, enabled });
     res.json(lock);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });

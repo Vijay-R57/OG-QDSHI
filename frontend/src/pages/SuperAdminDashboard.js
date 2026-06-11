@@ -231,6 +231,7 @@ const SuperAdminDashboard = () => {
   // Time Lock Management
   const [timeLocks,     setTimeLocks]     = useState({});
   const [tlSaving,      setTlSaving]      = useState({});
+  const [savingAll,     setSavingAll]     = useState(false);
   const [showTimeLock,  setShowTimeLock]  = useState(false);
 
   // Login Logs
@@ -282,11 +283,30 @@ const SuperAdminDashboard = () => {
     const k = `${dept}-${shift}`;
     setTlSaving(prev => ({ ...prev, [k]: true }));
     try {
-      const tl = timeLocks[k];
+      const tl = timeLocks[k] || { startTime: '06:00', endTime: '23:00', enabled: false };
       await axios.post(`${API}/api/timelock`, { dept, shift, startTime: tl.startTime, endTime: tl.endTime, enabled: tl.enabled });
       showNotify(`Time lock saved: ${dept} Shift ${shift}`, 'success');
-    } catch { showNotify('Save failed', 'error'); }
+    } catch (err) {
+      showNotify(err.response?.data?.message || 'Save failed', 'error');
+    }
     setTlSaving(prev => ({ ...prev, [k]: false }));
+  };
+
+  const saveAllTimeLocks = async () => {
+    setSavingAll(true);
+    try {
+      const locks = ALL_DEPT_SHIFTS.map(({ dept, shift }) => {
+        const k = `${dept}-${shift}`;
+        const tl = timeLocks[k] || { startTime: '06:00', endTime: '23:00', enabled: false };
+        return { dept, shift, startTime: tl.startTime, endTime: tl.endTime, enabled: tl.enabled };
+      });
+      await axios.post(`${API}/api/timelock`, { locks });
+      showNotify('All time locks saved successfully', 'success');
+      fetchTimeLocks();
+    } catch (err) {
+      showNotify(err.response?.data?.message || 'Save all failed', 'error');
+    }
+    setSavingAll(false);
   };
 
   // Login log fetch
@@ -405,9 +425,15 @@ const SuperAdminDashboard = () => {
         {/* Time Lock Management Panel */}
         {showTimeLock && (
           <div className="bg-white rounded-[2rem] shadow-xl border border-amber-100 overflow-hidden mb-8">
-            <div className="bg-amber-600 p-5 text-white flex justify-between items-center">
+            <div className="bg-amber-600 p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <h3 className="font-black uppercase text-xs tracking-widest flex items-center gap-2"><Timer size={16}/> Time Lock Management</h3>
-              <button onClick={() => setShowTimeLock(false)} className="hover:bg-amber-500 p-1 rounded-lg transition-colors"><X size={18}/></button>
+              <div className="flex items-center gap-2">
+                <button onClick={saveAllTimeLocks} disabled={savingAll}
+                  className="bg-white/10 hover:bg-white/20 disabled:opacity-60 px-4 py-2 text-[11px] font-black uppercase rounded-full tracking-[0.18em] transition-all">
+                  {savingAll ? 'Saving all…' : 'Save all'}
+                </button>
+                <button onClick={() => setShowTimeLock(false)} className="hover:bg-amber-500 p-1 rounded-lg transition-colors"><X size={18}/></button>
+              </div>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">

@@ -14,7 +14,7 @@ const Navbar = () => {
   const user = JSON.parse(localStorage.getItem('userInfo'));
 
   // Parse current shift/dept/module from URL
-  // URL pattern: /shift/:shift/:dept/:module  or /:dept/:module
+  // URL pattern: /shift/:shift/:dept/:module or /:dept/:module
   const pathParts = location.pathname.split('/').filter(Boolean);
   let currentDept   = null;
   let currentShift  = null;
@@ -24,11 +24,9 @@ const Navbar = () => {
     currentShift  = pathParts[1];
     currentDept   = pathParts[2];
     currentModule = pathParts[3];
-  } else if (pathParts.length === 2 && ['fg','pm','rm'].includes(pathParts[0])) {
+  } else if (pathParts.length === 2) {
     currentDept   = pathParts[0];
     currentModule = pathParts[1];
-  } else if (pathParts.length === 1 && ['fg','pm','rm'].includes(pathParts[0])) {
-    currentDept   = pathParts[0];
   }
 
   const handleLogout = () => {
@@ -99,6 +97,21 @@ const Navbar = () => {
               >
                 <Settings2 size={15} /> Supervisors
               </Link>
+            )}
+
+            {currentDept && currentModule && (
+              <div className="hidden lg:flex items-center gap-2 border-l pl-3 border-slate-200">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Shift</label>
+                <select
+                  value={currentShift || '1'}
+                  onChange={(e) => navigate(`/shift/${e.target.value}/${currentDept}/${currentModule}`)}
+                  className="bg-slate-100 border border-slate-200 text-slate-700 text-xs font-black uppercase tracking-wider rounded-2xl px-3 py-2 outline-none"
+                >
+                  <option value="1">Shift 1</option>
+                  <option value="2">Shift 2</option>
+                  <option value="3">Shift 3</option>
+                </select>
+              </div>
             )}
 
             <div className="flex items-center gap-2 border-l pl-3 border-slate-200">

@@ -160,7 +160,7 @@ const Health = () => {
       return;
     }
     if (isOutsideTimeLock()) {
-      showNotify(`Outside save window (${timeLock.startTime}–${timeLock.endTime}). Contact Super Admin.`, 'error');
+      showNotify(`Shift ${shift} timing exceeded (${timeLock.startTime}–${timeLock.endTime}). Contact your superadmin.`, 'error');
       return;
     }
     setSelectedDay(day);
@@ -244,10 +244,16 @@ const Health = () => {
         <button onClick={() => navigate('/')} className="flex items-center gap-1.5 text-[#475569] font-bold text-xs uppercase hover:text-emerald-600 transition-colors">
           <ChevronLeft size={18}/> <span className="hidden sm:inline">Back</span>
         </button>
-        <button onClick={downloadCSV}
-          className="flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-full font-bold text-xs shadow-sm transition-all">
-          <Download size={13}/> <span className="hidden sm:inline">Shiftwise</span>
-        </button>
+        <div className="flex gap-2 items-center">
+          <button onClick={downloadCSV}
+            className="flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-full font-bold text-xs shadow-sm transition-all">
+            <Download size={13}/> <span className="hidden sm:inline">Shiftwise</span>
+          </button>
+          <button onClick={downloadAllShiftsCSV}
+            className="flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-full font-bold text-xs shadow-sm transition-all">
+            <Download size={13}/> <span className="hidden sm:inline">Overall</span>
+          </button>
+        </div>
       </nav>
 
       {/* Title card with month nav on right */}

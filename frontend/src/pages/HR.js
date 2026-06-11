@@ -78,6 +78,49 @@ const downloadCSV = (entries, shift, date) => {
   a.click();
 };
 
+const downloadAllCSV = async (date) => {
+  const shifts = ['1', '2', '3'];
+  const resultRows = [];
+  const headers = ['Shift', 'Employee ID', 'Employee Name', 'Category', 'KPI / Metrics', 'Plan', 'Actual', '%', 'Status (RAG)', 'Remarks / Action Plan'];
+
+  const responses = await Promise.all(shifts.map(async s => {
+    try {
+      const res = await fetch(`${API}/api/hr?date=${date}&shift=${s}`);
+      return res.ok ? await res.json() : { entries: [] };
+    } catch {
+      return { entries: [] };
+    }
+  }));
+
+  shifts.forEach((shift, idx) => {
+    const data = responses[idx] || {};
+    const entries = data.entries || [];
+    const empId = data.empId || '';
+    const empName = data.empName || '';
+    HR_ROWS.forEach((row, i) => {
+      const entry = entries.find(e => e.rowIndex === i) || {};
+      resultRows.push([
+        shift,
+        empId,
+        empName,
+        row.category,
+        row.kpiMetric,
+        entry.plan || '',
+        entry.actual || '',
+        entry.percentage || '',
+        entry.statusRag || '',
+        entry.remarks || '',
+      ]);
+    });
+  });
+
+  const csv = [headers, ...resultRows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = `HR_AllShifts_${date}.csv`;
+  a.click();
+};
+
 export default function HR() {
   const navigate  = useNavigate();
   const reportRef = useRef(null);
@@ -145,7 +188,7 @@ export default function HR() {
       const res = await fetch(`${API}/api/hr/save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date, shift, entries: entries.map((e, i) => ({ rowIndex: i, ...e })), empId, empName }),
+        body: JSON.stringify({ date, shift, entries: entries.map((e, i) => ({ rowIndex: i, ...e })), empId, empName, userRole: user?.role }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Save failed');
@@ -240,6 +283,10 @@ export default function HR() {
               <button onClick={() => downloadCSV(entries, shift, date)}
                 className="flex items-center gap-2 px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-sm transition-all">
                 <Download size={15} /> CSV
+              </button>
+              <button onClick={() => downloadAllCSV(date)}
+                className="flex items-center gap-2 px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-sm transition-all">
+                Overall
               </button>
               {canEdit && <SaveBtn />}
             </div>

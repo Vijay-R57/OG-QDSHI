@@ -253,7 +253,6 @@ const Idea = ({ shift }) => {
             </p>
           )}
         </div>
-
         <p className="text-center text-slate-300 text-[10px] font-bold uppercase tracking-widest mt-6">
           All submissions are timestamped and logged automatically
         </p>

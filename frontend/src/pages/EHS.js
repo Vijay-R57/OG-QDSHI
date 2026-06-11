@@ -89,6 +89,51 @@ const downloadCSV = (entries, shift, date) => {
   a.click();
 };
 
+const downloadAllCSV = async (date) => {
+  const shifts = ['1', '2', '3'];
+  const resultRows = [];
+  const headers = ['Shift', 'Employee ID', 'Employee Name', 'Category', 'KPI / Metric', 'Target', 'Actual', 'Status (RAG)', 'Remarks / Action Items', 'Action Owner', 'Target Date', 'Status'];
+
+  const responses = await Promise.all(shifts.map(async s => {
+    try {
+      const res = await fetch(`${API}/api/ehs?date=${date}&shift=${s}`);
+      return res.ok ? await res.json() : { entries: [] };
+    } catch {
+      return { entries: [] };
+    }
+  }));
+
+  shifts.forEach((shift, idx) => {
+    const data = responses[idx] || {};
+    const entries = data.entries || [];
+    const empId = data.empId || '';
+    const empName = data.empName || '';
+    EHS_ROWS.forEach((row, i) => {
+      const entry = entries.find(e => e.rowIndex === i) || {};
+      resultRows.push([
+        shift,
+        empId,
+        empName,
+        row.category,
+        row.kpiMetric,
+        entry.targetValue || '',
+        entry.actualValue || '',
+        entry.statusRag || '',
+        entry.remarks || '',
+        entry.actionOwner || '',
+        entry.targetDate || '',
+        entry.actionStatus || '',
+      ]);
+    });
+  });
+
+  const csv = [headers, ...resultRows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = `EHS_AllShifts_${date}.csv`;
+  a.click();
+};
+
 export default function EHS() {
   const navigate  = useNavigate();
   const reportRef = useRef(null);
@@ -147,7 +192,7 @@ export default function EHS() {
       const res = await fetch(`${API}/api/ehs/save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date, shift, entries: entries.map((e, i) => ({ rowIndex: i, ...e })), empId, empName }),
+        body: JSON.stringify({ date, shift, entries: entries.map((e, i) => ({ rowIndex: i, ...e })), empId, empName, userRole: user?.role }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Save failed');
@@ -263,6 +308,10 @@ export default function EHS() {
               <button onClick={() => downloadCSV(entries, shift, date)}
                 className="flex items-center gap-2 px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-sm transition-all">
                 <Download size={15} /> CSV
+              </button>
+              <button onClick={() => downloadAllCSV(date)}
+                className="flex items-center gap-2 px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-sm transition-all">
+                Overall
               </button>
               {canEdit && <SaveBtn />}
             </div>

@@ -183,7 +183,10 @@ const DeliveryPage = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             letter: 'D', shift: activeShift, dept: activeDept, 
-            logs: updatedLogs 
+            logs: updatedLogs,
+            empId: user?.employeeId,
+            empName: user?.name,
+            userRole: user?.role,
           }),
         });
         if (res.ok) setter(updatedLogs);
@@ -193,7 +196,15 @@ const DeliveryPage = () => {
         const res = await fetch(`${API_BASE}/update`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...dData, shift: activeShift, dept: activeDept, issueLogs: updatedIssueLogs }),
+          body: JSON.stringify({
+            ...dData,
+            shift: activeShift,
+            dept: activeDept,
+            issueLogs: updatedIssueLogs,
+            empId: user?.employeeId,
+            empName: user?.name,
+            userRole: user?.role,
+          }),
         });
         if (res.ok) {
           const saved = await res.json();
@@ -230,7 +241,9 @@ const DeliveryPage = () => {
         body: JSON.stringify({
           letter: 'D', shift: activeShift, dept: activeDept,
           logs: type === 'staff' ? staffLogs : activityLogs,
-          empId: user?.employeeId, empName: user?.name,
+          empId: user?.employeeId,
+          empName: user?.name,
+          userRole: user?.role,
         }),
       });
       if (res.ok) {
@@ -264,14 +277,21 @@ const DeliveryPage = () => {
       const res = await fetch(`${API_BASE}/update`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...dData, shift: activeShift, dept: activeDept, issueLogs: updatedLogs, empId: user?.employeeId, empName: user?.name }),
+        body: JSON.stringify({
+          ...dData,
+          shift: activeShift,
+          dept: activeDept,
+          issueLogs: updatedLogs,
+          empId: user?.employeeId,
+          empName: user?.name,
+          userRole: user?.role,
+        }),
       });
-      if (res.ok) {
-        const saved = await res.json();
-        setMetrics(prev => prev.map(m => m.letter === 'D' ? saved : m));
-        setIsModalOpen(false);
-        setLastBackupTime(new Date());
-      }
+      const result = await res.json();
+      if (!res.ok) return alert(result.error || result.message || 'Sync failed.');
+      setMetrics(prev => prev.map(m => m.letter === 'D' ? result : m));
+      setIsModalOpen(false);
+      setLastBackupTime(new Date());
     } catch (e) { alert('Sync failed.'); }
   };
 
@@ -392,6 +412,10 @@ const DeliveryPage = () => {
             }}
             className="flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-full text-xs font-bold shadow-sm transition-all">
             <Download size={13} /> <span className="hidden sm:inline">Shiftwise</span>
+          </button>
+          <button onClick={downloadAllShiftsCSV}
+            className="flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-full text-xs font-bold shadow-sm transition-all">
+            <Download size={13} /> <span className="hidden sm:inline">Overall</span>
           </button>
           {canEdit && (
             <button onClick={() => setIsModalOpen(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 sm:px-7 py-2 rounded-full text-[11px] font-black uppercase shadow-md transition-all active:scale-95">
