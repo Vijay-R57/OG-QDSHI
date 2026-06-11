@@ -19,14 +19,16 @@ router.get('/', async (req, res) => {
 
 // POST /api/ehs/save
 router.post('/save', async (req, res) => {
-  const { date, shift, entries, empId, empName } = req.body;
+  const { date, shift, entries, empId, empName, userRole } = req.body;
   if (!date || !shift || !Array.isArray(entries))
     return res.status(400).json({ error: 'date, shift and entries are required' });
   if (!empId || !empName)
     return res.status(400).json({ error: 'Employee ID and Employee Name are required' });
 
-  const lockCheck = await checkTimeLock('ehs', shift);
-  if (!lockCheck.allowed) return res.status(403).json({ error: lockCheck.message });
+  if (userRole !== 'superadmin') {
+    const lockCheck = await checkTimeLock('ehs', shift);
+    if (!lockCheck.allowed) return res.status(403).json({ error: lockCheck.message });
+  }
 
   try {
     await EhsEntry.findOneAndUpdate(

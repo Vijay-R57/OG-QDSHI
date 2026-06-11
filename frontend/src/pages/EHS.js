@@ -147,7 +147,7 @@ export default function EHS() {
       const res = await fetch(`${API}/api/ehs/save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date, shift, entries: entries.map((e, i) => ({ rowIndex: i, ...e })), empId, empName }),
+        body: JSON.stringify({ date, shift, entries: entries.map((e, i) => ({ rowIndex: i, ...e })), empId, empName, userRole: user?.role }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Save failed');

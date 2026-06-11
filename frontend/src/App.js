@@ -11,7 +11,6 @@ import Delivery from './pages/Delivery';
 import Idea from './pages/Idea';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import HodDashboard from './pages/HodDashboard';
-import ShiftPickerPage from './pages/ShiftPickerPage';
 import EHS from './pages/EHS';
 import Engineering from './pages/Engineering';
 import HR from './pages/HR';
@@ -347,7 +346,7 @@ const ShiftPickerRoute = ({ user }) => {
   const { dept, module } = useParams();
   if (!user) return <Navigate to="/login" />;
   if (!VALID_DEPTS.includes(dept) || !VALID_MODULES.includes(module)) return <Navigate to="/" />;
-  return <ShiftPickerPage dept={dept} module={module} />;
+  return <Navigate to={`/shift/1/${dept}/${module}`} replace />;
 };
 
 const ModuleRoute = ({ user }) => {

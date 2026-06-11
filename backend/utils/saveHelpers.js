@@ -19,6 +19,11 @@ const formatISTTime = (istDate) => {
 const formatISTDate = (istDate) => istDate.toISOString().split('T')[0];
 
 // Returns { allowed: true } or { allowed: false, message }
+const parseISTTimeToMinutes = (time) => {
+  const [h, m] = time.split(':').map(Number);
+  return (h * 60) + m;
+};
+
 const checkTimeLock = async (dept, shift) => {
   try {
     const lock = await TimeLock.findOne({ dept, shift, enabled: true });
@@ -26,12 +31,19 @@ const checkTimeLock = async (dept, shift) => {
 
     const ist = nowIST();
     const cur = formatISTTime(ist);
+    const nowMinutes = parseISTTimeToMinutes(cur);
+    const startMinutes = parseISTTimeToMinutes(lock.startTime);
+    const endMinutes = parseISTTimeToMinutes(lock.endTime);
 
-    if (cur >= lock.startTime && cur <= lock.endTime) return { allowed: true };
+    const withinWindow = startMinutes <= endMinutes
+      ? nowMinutes >= startMinutes && nowMinutes <= endMinutes
+      : nowMinutes >= startMinutes || nowMinutes <= endMinutes;
+
+    if (withinWindow) return { allowed: true };
 
     return {
       allowed: false,
-      message: `Outside edit window for ${dept.toUpperCase()} Shift ${shift} (${lock.startTime}–${lock.endTime} IST). Current IST time: ${cur}`,
+      message: `Shift ${shift} timing exceeded (${lock.startTime}–${lock.endTime} IST). Contact your superadmin.`,
     };
   } catch {
     return { allowed: true }; // fail open so saves still work if DB is down

@@ -98,7 +98,7 @@ const QualityPage = () => {
         const res = await fetch(`${API_BASE_URL}/update`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...qData, shift: shift || '1', dept: dept || 'fgmw', issueLogs: updatedLogs, empId: user?.employeeId, empName: user?.name })
+          body: JSON.stringify({ ...qData, shift: shift || '1', dept: dept || 'fgmw', issueLogs: updatedLogs, empId: user?.employeeId, empName: user?.name, userRole: user?.role })
         });
         if (res.ok) {
           const saved = await res.json();
@@ -129,7 +129,7 @@ const QualityPage = () => {
       const res = await fetch(`${API_BASE_URL}/update`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...qData, shift: shift || '1', dept: dept || 'fgmw', issueLogs: updatedLogs, empId: user?.employeeId, empName: user?.name })
+        body: JSON.stringify({ ...qData, shift: shift || '1', dept: dept || 'fgmw', issueLogs: updatedLogs, empId: user?.employeeId, empName: user?.name, userRole: user?.role })
       });
       if (res.ok) {
         const saved = await res.json();
@@ -151,7 +151,7 @@ const QualityPage = () => {
       const res = await fetch(`${API_BASE_URL}/staff`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ letter: 'Q', shift: shift || '1', dept: dept || 'fgmw', logs: staffLogs, empId: user?.employeeId, empName: user?.name }),
+        body: JSON.stringify({ letter: 'Q', shift: shift || '1', dept: dept || 'fgmw', logs: staffLogs, empId: user?.employeeId, empName: user?.name, userRole: user?.role }),
       });
       if (res.ok) notifySuccess("Staff Logs Updated");
       else { const e = await res.json().catch(() => ({})); notifyError(e.error || 'Staff save failed'); }
@@ -165,7 +165,7 @@ const QualityPage = () => {
       const res = await fetch(`${API_BASE_URL}/activity`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ letter: 'Q', shift: shift || '1', dept: dept || 'fgmw', logs: activityLogs, empId: user?.employeeId, empName: user?.name }),
+        body: JSON.stringify({ letter: 'Q', shift: shift || '1', dept: dept || 'fgmw', logs: activityLogs, empId: user?.employeeId, empName: user?.name, userRole: user?.role }),
       });
       if (res.ok) notifySuccess("Activity Logs Updated");
       else { const e = await res.json().catch(() => ({})); notifyError(e.error || 'Activity save failed'); }

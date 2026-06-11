@@ -160,7 +160,7 @@ const Health = () => {
       return;
     }
     if (isOutsideTimeLock()) {
-      showNotify(`Outside save window (${timeLock.startTime}–${timeLock.endTime}). Contact Super Admin.`, 'error');
+      showNotify(`Shift ${shift} timing exceeded (${timeLock.startTime}–${timeLock.endTime}). Contact your superadmin.`, 'error');
       return;
     }
     setSelectedDay(day);
