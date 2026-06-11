@@ -143,7 +143,7 @@ const runTest = async () => {
 
     console.log(`Sending test email...\nTO: ${toEmails.join(', ')}`);
 
-    const mailOptions = {
+    const mailOptions = { 
       from: process.env.SMTP_FROM || '"Arcolab QMS" <test@arcolab.com>',
       to: toEmails.join(', '),
       subject,

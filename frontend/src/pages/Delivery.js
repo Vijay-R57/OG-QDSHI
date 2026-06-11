@@ -183,7 +183,10 @@ const DeliveryPage = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             letter: 'D', shift: activeShift, dept: activeDept, 
-            logs: updatedLogs 
+            logs: updatedLogs,
+            empId: user?.employeeId,
+            empName: user?.name,
+            userRole: user?.role,
           }),
         });
         if (res.ok) setter(updatedLogs);
@@ -193,7 +196,15 @@ const DeliveryPage = () => {
         const res = await fetch(`${API_BASE}/update`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...dData, shift: activeShift, dept: activeDept, issueLogs: updatedIssueLogs }),
+          body: JSON.stringify({
+            ...dData,
+            shift: activeShift,
+            dept: activeDept,
+            issueLogs: updatedIssueLogs,
+            empId: user?.employeeId,
+            empName: user?.name,
+            userRole: user?.role,
+          }),
         });
         if (res.ok) {
           const saved = await res.json();
@@ -230,7 +241,9 @@ const DeliveryPage = () => {
         body: JSON.stringify({
           letter: 'D', shift: activeShift, dept: activeDept,
           logs: type === 'staff' ? staffLogs : activityLogs,
-          empId: user?.employeeId, empName: user?.name,
+          empId: user?.employeeId,
+          empName: user?.name,
+          userRole: user?.role,
         }),
       });
       if (res.ok) {
@@ -264,14 +277,21 @@ const DeliveryPage = () => {
       const res = await fetch(`${API_BASE}/update`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...dData, shift: activeShift, dept: activeDept, issueLogs: updatedLogs, empId: user?.employeeId, empName: user?.name }),
+        body: JSON.stringify({
+          ...dData,
+          shift: activeShift,
+          dept: activeDept,
+          issueLogs: updatedLogs,
+          empId: user?.employeeId,
+          empName: user?.name,
+          userRole: user?.role,
+        }),
       });
-      if (res.ok) {
-        const saved = await res.json();
-        setMetrics(prev => prev.map(m => m.letter === 'D' ? saved : m));
-        setIsModalOpen(false);
-        setLastBackupTime(new Date());
-      }
+      const result = await res.json();
+      if (!res.ok) return alert(result.error || result.message || 'Sync failed.');
+      setMetrics(prev => prev.map(m => m.letter === 'D' ? result : m));
+      setIsModalOpen(false);
+      setLastBackupTime(new Date());
     } catch (e) { alert('Sync failed.'); }
   };
 

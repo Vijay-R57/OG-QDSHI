@@ -90,3 +90,4 @@ const notifyHod = async ({ empId, empName, dept, shift, module, deptType, date }
 };
 
 module.exports = { checkTimeLock, createAuditLog, notifyHod, nowIST, formatISTTime, formatISTDate };
+ 
