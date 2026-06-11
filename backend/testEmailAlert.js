@@ -1,3 +1,5 @@
+// Must be set BEFORE any network/TLS calls – bypasses corporate proxy SSL interception
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 require('dotenv').config();
 const nodemailer = require('nodemailer');
 const path = require('path');

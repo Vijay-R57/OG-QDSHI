@@ -1,3 +1,10 @@
+// Bypass corporate proxy SSL interception at the Node.js TLS socket level.
+// The nodemailer `tls.rejectUnauthorized` option only covers STARTTLS,
+// not the initial TCP→TLS handshake intercepted by a corporate MITM proxy.
+if (process.env.SMTP_TLS_REJECT_UNAUTHORIZED === 'false') {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+}
+
 const nodemailer = require('nodemailer');
 const path = require('path');
 
@@ -20,9 +27,8 @@ let transporterVerified = false;
 
 const getTransporter = () => {
   if (!transporter) {
-    const rejectUnauthorized = process.env.SMTP_TLS_REJECT_UNAUTHORIZED !== 'false'
-      ? (process.env.SMTP_TLS_REJECT_UNAUTHORIZED === 'true')
-      : false;
+    // Default: reject unauthorized (secure). Set SMTP_TLS_REJECT_UNAUTHORIZED=false to disable.
+  const rejectUnauthorized = process.env.SMTP_TLS_REJECT_UNAUTHORIZED !== 'false';
     transporter = nodemailer.createTransport({
       host:   process.env.SMTP_HOST || 'smtp.gmail.com',
       port:   parseInt(process.env.SMTP_PORT || '587'),
