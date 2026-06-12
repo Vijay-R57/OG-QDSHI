@@ -1,5 +1,3 @@
-// Must be set BEFORE any network/TLS calls – bypasses corporate proxy SSL interception
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 require('dotenv').config();
 const nodemailer = require('nodemailer');
 const path = require('path');
@@ -34,7 +32,6 @@ const runTest = async () => {
           user: process.env.SMTP_USER,
           pass: process.env.SMTP_PASS,
         },
-        tls: { rejectUnauthorized: false }, // bypass corporate proxy SSL interception
       });
     } else {
       console.log('No SMTP credentials in .env, using Ethereal Email for testing...');
@@ -47,7 +44,6 @@ const runTest = async () => {
           user: testAccount.user,
           pass: testAccount.pass,
         },
-        tls: { rejectUnauthorized: false },
       });
     }
 
@@ -81,16 +77,16 @@ const runTest = async () => {
     let toEmails = [];
     if (supervisorEmail) toEmails.push(supervisorEmail);
     if (hodEmail) toEmails.push(hodEmail);
+
+    // Add mock superadmins if none exist so the test output shows them
+    if (superAdminEmails.length === 0) {
+        superAdminEmails.push('superadmin1@example.com', 'superadmin2@example.com');
+    }
+    
+    toEmails.push(...superAdminEmails);
     toEmails = [...new Set(toEmails)];
 
-    // Superadmins go to CC, not TO
-    const ccEmails = superAdminEmails.length > 0 ? superAdminEmails : [];
-
-    // Use a generic greeting when multiple recipients get the same email
-    const recipientName =
-      toEmails.length === 1
-        ? (supervisorEmail ? supervisorName : 'HOD User')
-        : 'Supervisor / HOD Team';
+    const recipientName = supervisorEmail ? supervisorName : (hodEmail ? 'HOD User' : 'Team');
     
     const dept = 'ppp';
     const shift = '1';
@@ -101,7 +97,7 @@ const runTest = async () => {
 
     const deptName    = DEPT_FULL[dept] || dept.toUpperCase();
     const moduleList  = missedModules.map(m => `${m} — ${MODULE_NAMES[m] || m}`).join(', ');
-    const subject     = `[Arcolab] Missed Shift Update — ${deptName} | Shift ${shift} | ${date}`;
+    const subject     = `[PivotPath] Missed Shift Update — ${deptName} | Shift ${shift} | ${date}`;
 
     const moduleRows = missedModules
       .map(m => `<tr><td style="padding:4px 0;color:#64748b;width:130px;">Module:</td><td style="color:#dc2626;font-weight:bold;">${m} — ${MODULE_NAMES[m] || m}</td></tr>`)
@@ -110,8 +106,8 @@ const runTest = async () => {
     const html = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
       <div style="background:#059669;padding:24px;border-radius:12px 12px 0 0;text-align:center;">
-        <img src="cid:arcolablogo" alt="Arcolab Logo" style="max-height: 50px; margin-bottom: 12px; background: white; padding: 4px; border-radius: 4px;" />
-        <h1 style="color:white;margin:0;font-size:20px;">Arcolab Quality Management</h1>
+        <img src="cid:pivotpathlogo" alt="PivotPath Logo" style="max-height: 56px; margin-bottom: 12px; background: white; padding: 6px; border-radius: 6px;" />
+        <h1 style="color:white;margin:0;font-size:20px;">PivotPath Quality Management</h1>
         <p style="color:rgba(255,255,255,0.8);margin:4px 0 0;font-size:12px;">Automated Shift Alert</p>
       </div>
       <div style="background:white;padding:24px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px;">
@@ -140,26 +136,25 @@ const runTest = async () => {
         <p style="color:#334155;font-size:14px;">Please follow up with the responsible supervisor immediately. <em>(A copy of this alert has been sent to the Superadmin team for visibility.)</em></p>
         <hr style="border:none;border-top:1px solid #e2e8f0;margin:20px 0;" />
         <p style="color:#94a3b8;font-size:11px;margin:0;">
-          This is an automated message from the Arcolab Quality Management System. Do not reply to this email.
+          This is an automated message from the PivotPath Quality Management System. Do not reply to this email.
         </p>
       </div>
     </div>`;
 
-    console.log(`Sending test email...\nTO:  ${toEmails.join(', ')}\nCC:  ${ccEmails.join(', ') || '(none)'}`);
+    console.log(`Sending test email...\nTO: ${toEmails.join(', ')}`);
 
-    const mailOptions = {
-      from: process.env.SMTP_FROM || `"Arcolab QMS" <${process.env.SMTP_USER || 'test@arcolab.com'}>`,
-      to:   toEmails.join(', '),
+    const mailOptions = { 
+      from: process.env.SMTP_FROM || '"PivotPath QMS" <test@pivotpath.com>',
+      to: toEmails.join(', '),
       subject,
       html,
       attachments: [
         {
-          filename: 'arcolabLogo.jpg',
-          path: path.join(__dirname, '../frontend/src/assest/arcolabLogo.jpg'),
-          cid: 'arcolablogo'
+          filename: 'pivotPathLogo.svg',
+          path: path.join(__dirname, '../frontend/src/assest/pivotPathLogo.svg'),
+          cid: 'pivotpathlogo'
         }
-      ],
-      ...(ccEmails.length > 0 ? { cc: ccEmails.join(', ') } : {})
+      ]
     };
 
     const info = await transporter.sendMail(mailOptions);

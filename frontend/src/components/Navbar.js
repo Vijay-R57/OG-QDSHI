@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { UserCircle, LogOut, LayoutDashboard, Settings2 } from 'lucide-react';
-import logo from '../assest/arcolabLogo.jpg';
+import logo from '../assest/pivotPathLogo.svg';
 
 const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -54,8 +54,8 @@ const Navbar = () => {
     <nav className="flex justify-between items-center px-6 py-3 bg-white shadow-sm border-b sticky top-0 z-50">
       <div className="flex items-center gap-4">
         <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition">
-          <img src={logo} alt="Arcolab Logo" className="h-10 w-auto" />
-          <span className="text-lg font-bold text-slate-800 hidden sm:block">QDSHI Tracker</span>
+          <img src={logo} alt="PivotPath Logo" className="h-16 w-auto" />
+          <span className="text-lg font-bold text-slate-800 hidden sm:block">Daily Hurdles</span>
         </Link>
 
         {/* Breadcrumb context: dept → shift → module */}

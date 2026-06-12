@@ -410,7 +410,7 @@ const SuperAdminDashboard = () => {
       <div className="max-w-7xl mx-auto">
         <header className="mb-10 border-b border-emerald-100 pb-6">
           <h1 className="text-3xl md:text-4xl font-black text-emerald-900 tracking-tighter uppercase">Administration</h1>
-          <p className="text-emerald-600 font-bold uppercase tracking-[0.2em] text-[10px] md:text-xs">Arcolab Management Portal</p>
+          <p className="text-emerald-600 font-bold uppercase tracking-[0.2em] text-[10px] md:text-xs">PivotPath Management Portal</p>
         </header>
 
         {/* Register cards */}

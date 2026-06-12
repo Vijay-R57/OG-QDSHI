@@ -14,7 +14,7 @@ import HodDashboard from './pages/HodDashboard';
 import EHS from './pages/EHS';
 import Engineering from './pages/Engineering';
 import HR from './pages/HR';
-import ArcolabLogo from './assest/arcolabLogo.jpg';
+import ArcolabLogo from './assest/pivotPathLogo.svg';
 
 import { DEPARTMENTS, MODULES, SPECIAL_DEPARTMENTS, ALL_DEPARTMENTS } from './departments';
 
@@ -199,11 +199,11 @@ const Dashboard = () => {
             Global Enterprise Health Monitoring Indicators (Live Database Synced)
           </p>
         </div>
-        <div className="hidden md:flex items-center gap-4 bg-white px-5 py-3 rounded-2xl border border-slate-100 shadow-sm">
-          <img src={ArcolabLogo} alt="Logo" className="w-10 h-10 object-contain rounded-xl"/>
+        <div className="hidden md:flex items-center gap-5 bg-white px-6 py-4 rounded-2xl border border-slate-100 shadow-sm">
+          <img src={ArcolabLogo} alt="Logo" className="w-20 h-20 object-contain rounded-xl"/>
           <div>
-            <h3 className="text-slate-900 font-bold text-xs">Arcolab Workspace</h3>
-            <p className="text-slate-400 text-[9px] font-bold uppercase tracking-widest">Active Connectivity</p>
+            <h3 className="text-slate-900 font-bold text-sm">PivotPath Workspace</h3>
+            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Active Connectivity</p>
           </div>
         </div>
       </div>
