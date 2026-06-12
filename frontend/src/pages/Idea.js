@@ -156,7 +156,7 @@ const Idea = ({ shift }) => {
               Ideation — Shift {shift}
             </h1>
             <p className="text-slate-500 text-sm font-medium uppercase tracking-widest mt-1">
-              Arcolab Continuous Improvement System
+              PivotPath Continuous Improvement System
             </p>
           </div>
         </div>
@@ -169,7 +169,7 @@ const Idea = ({ shift }) => {
           </div>
           <div>
             <h1 className="text-2xl font-black text-slate-800 uppercase tracking-tight leading-none">Share Your Idea</h1>
-            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Arcolab Continuous Improvement</p>
+            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">PivotPath Continuous Improvement</p>
           </div>
         </div>
 

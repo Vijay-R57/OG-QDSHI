@@ -73,8 +73,8 @@ const LoginPage = () => {
           {/* Logo Section */}
           <div className="flex justify-center mb-6">
             <img 
-              src="/arcolabLogo.jpg" 
-              alt="Arcolab Logo" 
+              src="/pivotPathLogo.svg" 
+              alt="PivotPath Logo" 
               className="h-24 w-auto object-contain"
             />
           </div>
@@ -136,7 +136,7 @@ const LoginPage = () => {
 
         <div className="mt-8 text-center">
           <p className="text-slate-400 text-xs">
-            © {new Date().getFullYear()} Arcolab Private Limited
+            © {new Date().getFullYear()} PivotPath Private Limited
           </p>
         </div>
       </div>
