@@ -6,6 +6,17 @@ const dns      = require('dns');
 
 dns.setServers(["1.1.1.1", "8.8.8.8"]);
 
+// ── Serverless-safe DB connection (Vercel cold-start fix) ────────────────────
+// mongoose.connect() is async — on cold starts routes fire before it resolves.
+// This middleware awaits the connection on every request; warm invocations
+// short-circuit instantly via readyState check.
+let _dbReady = false;
+async function connectDB() {
+  if (mongoose.connection.readyState === 1) return; // already connected
+  await mongoose.connect(process.env.MONGO_URI);
+  _dbReady = true;
+}
+
 const metricRoutes      = require('./routes/metricRoutes');
 const userRoutes        = require('./routes/userRoutes');
 const healthRoutes      = require('./routes/healthRoutes');
@@ -27,8 +38,18 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// ✅ Ensure DB is ready before every request (no-op on warm invocations)
+app.use(async (req, res, next) => {
+  try { await connectDB(); next(); }
+  catch (err) {
+    console.error('DB connect error:', err.message);
+    res.status(503).json({ error: 'Database unavailable', detail: err.message });
+  }
+});
+
 app.use('/api/metrics',      metricRoutes);
 app.use('/api/users',        userRoutes);
+
 app.use('/api/health',       healthRoutes);
 app.use('/api/ideation',     ideationRoutes);
 app.use('/api/ehs',           ehsRoutes);
