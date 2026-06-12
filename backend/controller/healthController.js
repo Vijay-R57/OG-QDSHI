@@ -4,6 +4,12 @@ const { checkTimeLock, createAuditLog, notifyHod, nowIST, formatISTDate } = requ
 const getHealthData = async (req, res) => {
   try {
     const { month, year, dept, shift } = req.query;
+
+    // Guard: month and year are required; return empty payload if absent
+    if (!month || !year || isNaN(Number(year))) {
+      return res.status(200).json({ days: [] });
+    }
+
     const record = await HealthModel.findOne({
       month, year: Number(year), dept: dept || 'fgmw', shift: shift || '1',
     });
@@ -13,6 +19,7 @@ const getHealthData = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 const updateHealthDay = async (req, res) => {
   try {
