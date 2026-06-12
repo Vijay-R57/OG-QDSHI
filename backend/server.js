@@ -194,6 +194,11 @@ process.on('SIGINT', async () => {
   process.exit(0);
 });
 
+// Local dev server — Vercel ignores this and uses module.exports instead
+if (process.env.NODE_ENV !== 'production' || process.env.VERCEL !== '1') {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+}
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+// ✅ Required for Vercel serverless deployment
+module.exports = app;
