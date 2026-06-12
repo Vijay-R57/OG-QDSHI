@@ -17,6 +17,7 @@ const timeLockRoutes     = require('./routes/timeLockRoutes');
 const loginLogRoutes     = require('./routes/loginLogRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const { startShiftAlertJob } = require('./jobs/shiftAlertJob');
+const { initWatchdogScheduler } = require('./utils/watchdogScheduler');
 
 const app = express();
 
@@ -170,6 +171,9 @@ mongoose.connect(process.env.MONGO_URI)
 
     // Start shift-missed-alert cron job
     startShiftAlertJob();
+
+    // Start watchdog scheduler after DB is available
+    initWatchdogScheduler();
 
   })
   .catch(err => console.error('❌ MongoDB error:', err.message));

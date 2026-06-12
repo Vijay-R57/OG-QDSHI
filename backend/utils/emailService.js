@@ -1,5 +1,6 @@
 const nodemailer = require('nodemailer');
 const path = require('path');
+const User = require('../models/User');
 
 const DEPT_FULL = {
   fgmw:  'Finished Goods Warehouse',
@@ -126,3 +127,66 @@ const sendShiftMissedAlert = async ({ toEmails, ccEmails = [], recipientName, su
 };
 
 module.exports = { sendShiftMissedAlert };
+
+/**
+ * Notify HOD when a user submits a pillar record.
+ * opts: { empId, empName, dept, shift, module, deptType }
+ */
+const notifyHod = async ({ empId, empName, dept, shift, module: mod, deptType }) => {
+  const fallbackEmail = process.env.FALLBACK_HOD_EMAIL || 'admin-fallback@company.com';
+
+  // Find HOD for the department. Department field may be comma-separated, so use regex like other parts of the app.
+  const deptRegex = new RegExp(`(^|,)\\s*${dept}\\s*(,|$)`, 'i');
+  let hod;
+  try {
+    hod = await User.findOne({ role: 'hod', department: { $regex: deptRegex } }).lean();
+  } catch (err) {
+    console.error('❌ Error querying HOD from DB:', err && err.message ? err.message : err);
+  }
+
+  const hodEmail = (hod && (hod.gmail || hod.email)) || fallbackEmail;
+  const hodName = (hod && hod.name) || 'HOD';
+
+  const deptName = DEPT_FULL[dept] || dept.toUpperCase();
+  const pillar = (mod || '').toString().toUpperCase();
+
+  const subject = `[PivotPath] New ${pillar} Log — ${deptName} | Shift ${shift}`;
+
+  const html = `
+  <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+    <div style="background:#0f766e;padding:18px;border-radius:8px 8px 0 0;text-align:center;color:#fff;">
+      <h2 style="margin:0;font-size:18px;">New ${pillar} Submission</h2>
+      <p style="margin:6px 0 0;font-size:13px;opacity:0.9;">PivotPath — ${deptName}</p>
+    </div>
+    <div style="background:#fff;padding:18px;border:1px solid #e6eef0;border-top:none;border-radius:0 0 8px 8px;color:#1f2937;">
+      <p>Dear <strong>${hodName}</strong>,</p>
+      <p>A new <strong>${pillar}</strong> entry was submitted. Summary:</p>
+      <table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:8px;">
+        <tr><td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;width:35%;color:#6b7280;">Department</td><td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;font-weight:700;">${deptName}</td></tr>
+        <tr><td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;color:#6b7280;">Pillar / Module</td><td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;font-weight:700;">${pillar}</td></tr>
+        <tr><td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;color:#6b7280;">Shift</td><td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;font-weight:700;">${shift}</td></tr>
+        <tr><td style="padding:6px 8px;color:#6b7280;">Submitted By</td><td style="padding:6px 8px;font-weight:700;">${empName || 'Unknown'} ${empId ? `(${empId})` : ''}</td></tr>
+      </table>
+      <p style="margin-top:12px;color:#374151;font-size:13px;">Please review and acknowledge this entry.</p>
+      <p style="margin-top:14px;font-size:12px;color:#9ca3af;">This is an automated notification from PivotPath Quality Management System.</p>
+    </div>
+  </div>`;
+
+  const mailOptions = {
+    from: process.env.SMTP_FROM || `"PivotPath QMS" <${process.env.SMTP_USER}>`,
+    to: hodEmail,
+    subject,
+    html,
+  };
+
+  try {
+    const info = await getTransporter().sendMail(mailOptions);
+    console.log(`📨 notifyHod email sent: ${info.messageId} -> ${hodEmail}`);
+    return info;
+  } catch (err) {
+    console.error('❌ notifyHod failed to send email:', err && err.message ? err.message : err);
+    throw err;
+  }
+};
+
+module.exports = { sendShiftMissedAlert, notifyHod };
