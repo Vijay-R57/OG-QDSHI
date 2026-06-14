@@ -32,6 +32,9 @@ const runTest = async () => {
           user: process.env.SMTP_USER,
           pass: process.env.SMTP_PASS,
         },
+        tls: {
+          rejectUnauthorized: process.env.SMTP_TLS_REJECT_UNAUTHORIZED !== 'false',
+        },
       });
     } else {
       console.log('No SMTP credentials in .env, using Ethereal Email for testing...');

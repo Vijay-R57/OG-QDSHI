@@ -28,6 +28,9 @@ const getTransporter = () => {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
+      tls: {
+        rejectUnauthorized: process.env.SMTP_TLS_REJECT_UNAUTHORIZED !== 'false',
+      },
     });
     // Verify transporter and log any SMTP connectivity/auth issues early
     transporter.verify()
@@ -189,4 +192,10 @@ const notifyHod = async ({ empId, empName, dept, shift, module: mod, deptType })
   }
 };
 
-module.exports = { sendShiftMissedAlert, notifyHod };
+const verifyTransporter = () => {
+  getTransporter().verify()
+    .then(() => console.log('✅ SMTP transporter verified'))
+    .catch(err => console.error('❌ SMTP transporter verification failed:', err && err.message ? err.message : err));
+};
+
+module.exports = { sendShiftMissedAlert, notifyHod, verifyTransporter };
