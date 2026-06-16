@@ -158,15 +158,12 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchLivePillarMetrics = async () => {
       try {
-        // Only set back to loading if it's the very first time running to avoid dashboard flashes during intervals
-        if (!metrics) setLoading(true);
-        
         const response = await fetch(`${API}/api/metrics/global-pillars`);
-        
+
         if (!response.ok) {
           throw new Error(`HTTP network error status: ${response.status}`);
         }
-        
+
         const data = await response.json();
         setMetrics(data);
       } catch (error) {
@@ -183,9 +180,9 @@ const Dashboard = () => {
     };
 
     fetchLivePillarMetrics();
-    const interval = setInterval(fetchLivePillarMetrics, 10000); // Polling every 10s to reflect dynamic structural shifts
+    const interval = setInterval(fetchLivePillarMetrics, 30000); // Poll every 30s
     return () => clearInterval(interval);
-  }, [metrics]);
+  }, []); // Empty array — run once on mount only, interval handles subsequent polls
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 lg:py-10">
