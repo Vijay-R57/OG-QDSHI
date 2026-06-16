@@ -458,7 +458,7 @@ const QualityPage = () => {
         <div className="col-span-12 md:col-span-6 lg:col-span-5 flex flex-col gap-5">
           <ChartCard title={`${viewMonthName} DISTRIBUTION`}>
             <div className="h-[220px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={[
                   { name: 'Alerts', value: stats.alerts },
                   { name: 'Success', value: stats.success },
@@ -478,7 +478,7 @@ const QualityPage = () => {
 
           <ChartCard title={`${viewYear} PERFORMANCE TREND`}>
             <div className="h-[220px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height={220}>
                 <LineChart data={annualTrend}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
                   <XAxis dataKey="name" fontSize={10} axisLine={false} tickLine={false} />
@@ -541,16 +541,16 @@ const QualityPage = () => {
             </div>
             <div className="space-y-4">
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1 ml-1">Date</label>
-                <input type="date" value={customDate} onChange={(e) => setCustomDate(e.target.value)}
+                <label htmlFor="quality-date" className="text-[10px] font-black text-slate-400 uppercase block mb-1 ml-1">Date</label>
+                <input id="quality-date" name="date" type="date" value={customDate} onChange={(e) => setCustomDate(e.target.value)}
                   readOnly={isSupervisor} disabled={isSupervisor}
                   max={isSupervisor ? getISTDate() : undefined}
                   title={isSupervisor ? 'Supervisors can only edit today' : ''}
                   className={`w-full bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 text-sm outline-none focus:ring-2 ring-emerald-500 ${isSupervisor ? 'opacity-60 cursor-not-allowed' : ''}`} />
               </div>
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1 ml-1">Reason</label>
-                <select value={selectedIssue} onChange={(e) => { setSelectedIssue(e.target.value); setCustomReason(""); }} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 text-sm outline-none focus:ring-2 ring-emerald-500">
+                <label htmlFor="quality-reason" className="text-[10px] font-black text-slate-400 uppercase block mb-1 ml-1">Reason</label>
+                <select id="quality-reason" name="reason" value={selectedIssue} onChange={(e) => { setSelectedIssue(e.target.value); setCustomReason(""); }} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 text-sm outline-none focus:ring-2 ring-emerald-500">
                   <option value="Target Met">✅ Target Met</option>
                   <option value="Machine Breakdown">⚠️ Machine Breakdown</option>
                   <option value="No Power">⚠️ No Power</option>
@@ -561,8 +561,10 @@ const QualityPage = () => {
               </div>
               {selectedIssue === "Others" && (
                 <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase block mb-1 ml-1">Specify Reason</label>
+                  <label htmlFor="quality-custom-reason" className="text-[10px] font-black text-slate-400 uppercase block mb-1 ml-1">Specify Reason</label>
                   <input
+                    id="quality-custom-reason"
+                    name="customReason"
                     type="text"
                     value={customReason}
                     onChange={(e) => setCustomReason(e.target.value)}
@@ -573,8 +575,8 @@ const QualityPage = () => {
               )}
               {selectedIssue !== "Target Met" && (
                 <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase block mb-1 ml-1">Deviation Type</label>
-                  <select value={deviationType} onChange={(e) => setDeviationType(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 text-sm outline-none focus:ring-2 ring-emerald-500">
+                  <label htmlFor="quality-deviation" className="text-[10px] font-black text-slate-400 uppercase block mb-1 ml-1">Deviation Type</label>
+                  <select id="quality-deviation" name="deviationType" value={deviationType} onChange={(e) => setDeviationType(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 text-sm outline-none focus:ring-2 ring-emerald-500">
                     <option value="">-- Select Deviation Type --</option>
                     <option value="Human Error">Human Error</option>
                     <option value="Process Error">Process Error</option>

@@ -128,10 +128,16 @@ const UserRow = ({ u, roleType, editData, onLocalChange, onSave, onDeleteClick }
       <td className="px-5 py-3">
         <div className="flex items-center bg-emerald-50 rounded-lg px-3 py-2 border border-emerald-100 max-w-[140px]">
           <Key size={12} className="text-emerald-300 mr-2 flex-shrink-0" />
-          <input type="password" placeholder="NEW PWD"
+          <input
+            id={`pwd-${id}`}
+            name={`pwd-${id}`}
+            type="password"
+            placeholder="NEW PWD"
             className="bg-transparent border-none outline-none text-[10px] font-black w-full placeholder:text-emerald-200"
             value={editData[id]?.password || ''}
-            onChange={e => onLocalChange(id, 'password', e.target.value)} />
+            onChange={e => onLocalChange(id, 'password', e.target.value)}
+            autoComplete="new-password"
+          />
         </div>
       </td>
 
@@ -463,12 +469,20 @@ const SuperAdminDashboard = () => {
                           </button>
                         </td>
                         <td className="px-5 py-2.5">
-                          <input type="time" value={tl.startTime}
+                          <input
+                            id={`tl-start-${k}`}
+                            name={`tl-start-${k}`}
+                            type="time"
+                            value={tl.startTime}
                             onChange={e => setTimeLocks(prev => ({ ...prev, [k]: { ...tl, startTime: e.target.value } }))}
                             className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold outline-none focus:border-amber-400" />
                         </td>
                         <td className="px-5 py-2.5">
-                          <input type="time" value={tl.endTime}
+                          <input
+                            id={`tl-end-${k}`}
+                            name={`tl-end-${k}`}
+                            type="time"
+                            value={tl.endTime}
                             onChange={e => setTimeLocks(prev => ({ ...prev, [k]: { ...tl, endTime: e.target.value } }))}
                             className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold outline-none focus:border-amber-400" />
                         </td>
@@ -554,23 +568,27 @@ const SuperAdminDashboard = () => {
             <div className="p-6 md:p-8 overflow-y-auto space-y-4">
               {/* Name */}
               <div className="relative">
+                <label htmlFor="reg-name" className="sr-only">Full Name</label>
                 <UserPlus className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-600 pointer-events-none" size={20} />
-                <input required type="text" placeholder="Full Name" value={formData.name}
+                <input id="reg-name" name="name" required type="text" placeholder="Full Name" value={formData.name}
                   onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
+                  autoComplete="name"
                   style={{ paddingLeft: '50px' }} className={inputCls} />
               </div>
 
               {/* DOB + Emp ID */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="relative">
+                  <label htmlFor="reg-dob" className="sr-only">Date of Birth</label>
                   <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-600 pointer-events-none" size={20} />
-                  <input required type="date" value={formData.dob}
+                  <input id="reg-dob" name="dob" required type="date" value={formData.dob}
                     onChange={e => setFormData(p => ({ ...p, dob: e.target.value }))}
                     style={{ paddingLeft: '50px' }} className={inputCls} />
                 </div>
                 <div className="relative">
+                  <label htmlFor="reg-empid" className="sr-only">Employee ID</label>
                   <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-600 pointer-events-none" size={20} />
-                  <input required type="text" placeholder="Emp ID" value={formData.employeeId}
+                  <input id="reg-empid" name="employeeId" required type="text" placeholder="Emp ID" value={formData.employeeId}
                     onChange={e => setFormData(p => ({ ...p, employeeId: e.target.value }))}
                     style={{ paddingLeft: '50px' }} className={`${inputCls} uppercase`} />
                 </div>
@@ -578,17 +596,21 @@ const SuperAdminDashboard = () => {
 
               {/* Email */}
               <div className="relative">
+                <label htmlFor="reg-email" className="sr-only">Email Address</label>
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-600 pointer-events-none" size={20} />
-                <input required type="email" placeholder="Email Address" value={formData.gmail}
+                <input id="reg-email" name="gmail" required type="email" placeholder="Email Address" value={formData.gmail}
                   onChange={e => setFormData(p => ({ ...p, gmail: e.target.value }))}
+                  autoComplete="email"
                   style={{ paddingLeft: '50px' }} className={inputCls} />
               </div>
 
               {/* Password */}
               <div className="relative">
+                <label htmlFor="reg-password" className="sr-only">Password</label>
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-600 pointer-events-none" size={20} />
-                <input required type="password" placeholder="Set Password" value={formData.password}
+                <input id="reg-password" name="password" required type="password" placeholder="Set Password" value={formData.password}
                   onChange={e => setFormData(p => ({ ...p, password: e.target.value }))}
+                  autoComplete="new-password"
                   style={{ paddingLeft: '50px' }} className={inputCls} />
               </div>
 

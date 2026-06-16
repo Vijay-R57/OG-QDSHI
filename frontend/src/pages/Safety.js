@@ -413,7 +413,7 @@ const SafetyPage = () => {
         <div className="col-span-12 md:col-span-6 lg:col-span-4 flex flex-col gap-5">
           <ChartCard title="MONTHLY INCIDENT TREND">
             <div className="h-[240px] w-full mt-2">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height={240}>
                 <LineChart data={yearlyStats} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
                   <XAxis dataKey="name" fontSize={8} axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontWeight: 700 }} />
@@ -475,7 +475,7 @@ const SafetyPage = () => {
             </div>
 
             <div className="space-y-4">
-              <InputField label="Date" type="date" value={customDate}
+              <InputField id="safety-date" label="Date" type="date" value={customDate}
                 onChange={(e) => setCustomDate(e.target.value)}
                 max={user?.role === 'supervisor' ? getISTDate() : undefined}
                 readOnly={user?.role === 'supervisor'}
@@ -483,8 +483,10 @@ const SafetyPage = () => {
               />
 
               <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-400 uppercase ml-2">No. of Safety Incidents</label>
+                <label htmlFor="safety-incidents" className="text-[10px] font-black text-slate-400 uppercase ml-2">No. of Safety Incidents</label>
                 <input
+                  id="safety-incidents"
+                  name="numSafetyIncidents"
                   type="number" min="0" value={numSafetyIncidents}
                   onChange={(e) => setNumSafetyIncidents(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-100 p-4 rounded-xl text-sm outline-none ring-orange-500 focus:ring-2 transition-all"
@@ -497,8 +499,10 @@ const SafetyPage = () => {
               {Number(numSafetyIncidents) > 0 && (
                 <>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2">No. of Near Miss Incidents</label>
+                    <label htmlFor="safety-nearmiss" className="text-[10px] font-black text-slate-400 uppercase ml-2">No. of Near Miss Incidents</label>
                     <input
+                      id="safety-nearmiss"
+                      name="numNearMiss"
                       type="number" min="0" value={numNearMiss}
                       onChange={(e) => setNumNearMiss(e.target.value)}
                       className="w-full bg-slate-50 border border-slate-100 p-4 rounded-xl text-sm outline-none ring-orange-500 focus:ring-2 transition-all"
@@ -509,8 +513,10 @@ const SafetyPage = () => {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2">No. of Unsafe Acts / Conditions</label>
+                    <label htmlFor="safety-unsafeacts" className="text-[10px] font-black text-slate-400 uppercase ml-2">No. of Unsafe Acts / Conditions</label>
                     <input
+                      id="safety-unsafeacts"
+                      name="numUnsafeActs"
                       type="number" min="0" value={numUnsafeActs}
                       onChange={(e) => setNumUnsafeActs(e.target.value)}
                       className="w-full bg-slate-50 border border-slate-100 p-4 rounded-xl text-sm outline-none ring-orange-500 focus:ring-2 transition-all"
@@ -521,10 +527,10 @@ const SafetyPage = () => {
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
-                    <InputField label="No. of People Affected" type="number" value={peopleAffected} onChange={(e)=>setPeopleAffected(e.target.value)} placeholder="0" />
+                    <InputField id="safety-affected" label="No. of People Affected" type="number" value={peopleAffected} onChange={(e)=>setPeopleAffected(e.target.value)} placeholder="0" />
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Severity</label>
-                      <select value={severity} onChange={(e)=>setSeverity(e.target.value)} className="w-full bg-slate-50 border border-slate-100 p-4 rounded-xl text-sm ring-orange-500 focus:ring-2 transition-all">
+                      <label htmlFor="safety-severity" className="text-[10px] font-black text-slate-400 uppercase ml-2">Severity</label>
+                      <select id="safety-severity" name="severity" value={severity} onChange={(e)=>setSeverity(e.target.value)} className="w-full bg-slate-50 border border-slate-100 p-4 rounded-xl text-sm ring-orange-500 focus:ring-2 transition-all">
                         <option value="Low">Low</option>
                         <option value="Medium">Medium</option>
                         <option value="High">High</option>
@@ -565,10 +571,10 @@ const LegendItem = ({ color, label }) => (
   </div>
 );
 
-const InputField = ({ label, ...props }) => (
+const InputField = ({ label, id, ...props }) => (
   <div className="space-y-1">
-    <label className="text-[10px] font-black text-slate-400 uppercase ml-2">{label}</label>
-    <input {...props} className="w-full bg-slate-50 border border-slate-100 p-4 rounded-xl text-sm outline-none ring-orange-500 focus:ring-2 transition-all" />
+    <label htmlFor={id} className="text-[10px] font-black text-slate-400 uppercase ml-2">{label}</label>
+    <input id={id} name={id} {...props} className="w-full bg-slate-50 border border-slate-100 p-4 rounded-xl text-sm outline-none ring-orange-500 focus:ring-2 transition-all" />
   </div>
 );
 

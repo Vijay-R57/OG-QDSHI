@@ -91,6 +91,8 @@ const LoginPage = () => {
           <div className="relative">
             <Mail className="absolute left-4 top-4 text-emerald-600" size={18} />
             <input
+              id="login-email"
+              name="email"
               type="email"
               placeholder="Email Address"
               className="w-full pl-12 pr-4 py-4 bg-emerald-50/50 border border-emerald-100 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition-all"
@@ -106,6 +108,8 @@ const LoginPage = () => {
           <div className="relative">
             <Lock className="absolute left-4 top-4 text-emerald-600" size={18} />
             <input
+              id="login-password"
+              name="password"
               type={showPassword ? 'text' : 'password'}
               placeholder="Password"
               className="w-full pl-12 pr-12 py-4 bg-emerald-50/50 border border-emerald-100 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition-all"
