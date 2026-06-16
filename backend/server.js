@@ -38,6 +38,7 @@ app.use(cors({
     if (!origin) return callback(null, true);
     const allowed = [
       process.env.FRONTEND_URL,
+      'https://og-qdshi.vercel.app',
       'https://qdsharcolab.vercel.app',
       'http://localhost:3000',
       'http://localhost:8080',
