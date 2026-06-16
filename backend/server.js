@@ -4,7 +4,13 @@ const mongoose = require('mongoose');
 const cors     = require('cors');
 const dns      = require('dns');
 
-dns.setServers(["1.1.1.1", "8.8.8.8"]);
+if (!process.env.VERCEL) {
+  try {
+    dns.setServers(["1.1.1.1", "8.8.8.8"]);
+  } catch (err) {
+    console.warn("Failed to set DNS servers:", err.message);
+  }
+}
 
 // ── Serverless-safe DB connection (Vercel cold-start fix) ────────────────────
 // mongoose.connect() is async — on cold starts routes fire before it resolves.
