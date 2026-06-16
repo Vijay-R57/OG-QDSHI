@@ -325,7 +325,7 @@ const QualityPage = () => {
   if (loading) return (
     <div className="h-screen flex flex-col items-center justify-center bg-white gap-4">
       <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-      <div className="text-emerald-600 font-black uppercase tracking-[0.3em] animate-pulse">Syncing Arcolab Data...</div>
+      <div className="text-emerald-600 font-black uppercase tracking-[0.3em] animate-pulse">Syncing PivotPath Data...</div>
     </div>
   );
 

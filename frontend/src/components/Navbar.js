@@ -55,7 +55,7 @@ const Navbar = () => {
       <div className="flex items-center gap-4">
         <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition">
           <img src={logo} alt="PivotPath Logo" className="h-16 w-auto" />
-          <span className="text-lg font-bold text-slate-800 hidden sm:block">Daily Hurdles</span>
+          <span className="text-lg font-bold text-slate-800 hidden sm:block">Daily Huddles </span>
         </Link>
 
         {/* Breadcrumb context: dept → shift → module */}

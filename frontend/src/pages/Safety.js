@@ -212,7 +212,7 @@ const SafetyPage = () => {
     } catch { alert('Failed to download all-shifts data'); }
   };
 
-  if (loading) return <div className="h-screen flex items-center justify-center bg-white text-orange-600 font-black uppercase tracking-widest italic">Arcolab Safety Sync...</div>;
+  if (loading) return <div className="h-screen flex items-center justify-center bg-white text-orange-600 font-black uppercase tracking-widest italic">PivotPath Safety Sync...</div>;
 
   return (
     <div ref={reportRef} className="min-h-screen bg-[#F0F4F8] text-[#334155] font-sans flex flex-col">

@@ -14,7 +14,7 @@ import HodDashboard from './pages/HodDashboard';
 import EHS from './pages/EHS';
 import Engineering from './pages/Engineering';
 import HR from './pages/HR';
-import ArcolabLogo from './assest/pivotPathLogo.svg';
+import PivotPathLogo from './assest/pivotPathLogo.svg';
 
 import { DEPARTMENTS, MODULES, SPECIAL_DEPARTMENTS, ALL_DEPARTMENTS } from './departments';
 
@@ -200,7 +200,7 @@ const Dashboard = () => {
           </p>
         </div>
         <div className="hidden md:flex items-center gap-5 bg-white px-6 py-4 rounded-2xl border border-slate-100 shadow-sm">
-          <img src={ArcolabLogo} alt="Logo" className="w-20 h-20 object-contain rounded-xl"/>
+          <img src={PivotPathLogo} alt="PivotPath Logo" className="w-20 h-20 object-contain rounded-xl"/>
           <div>
             <h3 className="text-slate-900 font-bold text-sm">PivotPath Workspace</h3>
             <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Active Connectivity</p>
