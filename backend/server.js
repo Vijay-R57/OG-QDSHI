@@ -32,6 +32,14 @@ const { initWatchdogScheduler } = require('./utils/watchdogScheduler');
 
 const app = express();
 
+// ✅ Vercel path-prefix rewriting middleware
+app.use((req, res, next) => {
+  if (process.env.VERCEL && !req.url.startsWith('/api')) {
+    req.url = '/api' + req.url;
+  }
+  next();
+});
+
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (server-to-server, curl, etc.)
