@@ -33,7 +33,21 @@ const { initWatchdogScheduler } = require('./utils/watchdogScheduler');
 const app = express();
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (server-to-server, curl, etc.)
+    if (!origin) return callback(null, true);
+    const allowed = [
+      process.env.FRONTEND_URL,
+      'https://qdsharcolab.vercel.app',
+      'http://localhost:3000',
+      'http://localhost:8080',
+    ].filter(Boolean);
+    // Also allow any *.vercel.app subdomain for preview deployments
+    if (allowed.includes(origin) || /\.vercel\.app$/.test(origin)) {
+      return callback(null, true);
+    }
+    callback(new Error(`CORS blocked: ${origin}`));
+  },
   credentials: true,
 }));
 app.use(express.json());
