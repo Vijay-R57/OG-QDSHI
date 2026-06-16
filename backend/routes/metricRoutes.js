@@ -70,31 +70,8 @@ const getShiftCounts = (metric, shift) => {
   return { totalAlerts, totalSuccess };
 };
 
-// GET metrics (filtered by shift & dept)
-router.get('/', async (req, res) => {
-  try {
-    const { shift, dept } = req.query;
-    const query = {};
-    if (dept) query.dept = dept;
-
-    const metrics = await Metric.find(query);
-    if (!shift) return res.json(metrics);
-
-    const shiftMetrics = metrics.map(m => {
-      const sd = m.shifts?.[shift] || {};
-      return {
-        _id: m._id, letter: m.letter, dept: m.dept,
-        label: m.label || getLabel(m.letter, m.dept),
-        alerts: sd.alerts ?? 0, success: sd.success ?? 0,
-        daysData: sd.daysData ?? [], issueLogs: sd.issueLogs ?? [],
-        staffLogs: sd.staffLogs ?? [], activityLogs: sd.activityLogs ?? [],
-      };
-    });
-    res.json(shiftMetrics);
-  } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
 // GET global pillar totals for operational dashboard
+// ⚠️  MUST be declared BEFORE router.get('/') — Express matches in order
 router.get('/global-pillars', async (req, res) => {
   try {
     const letters = ['Q', 'D', 'S', 'H'];
@@ -143,6 +120,30 @@ router.get('/global-pillars', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// GET metrics (filtered by shift & dept)
+router.get('/', async (req, res) => {
+  try {
+    const { shift, dept } = req.query;
+    const query = {};
+    if (dept) query.dept = dept;
+
+    const metrics = await Metric.find(query);
+    if (!shift) return res.json(metrics);
+
+    const shiftMetrics = metrics.map(m => {
+      const sd = m.shifts?.[shift] || {};
+      return {
+        _id: m._id, letter: m.letter, dept: m.dept,
+        label: m.label || getLabel(m.letter, m.dept),
+        alerts: sd.alerts ?? 0, success: sd.success ?? 0,
+        daysData: sd.daysData ?? [], issueLogs: sd.issueLogs ?? [],
+        staffLogs: sd.staffLogs ?? [], activityLogs: sd.activityLogs ?? [],
+      };
+    });
+    res.json(shiftMetrics);
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // POST update metrics
