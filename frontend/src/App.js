@@ -3,9 +3,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useParam
 import { motion } from 'framer-motion';
 import Navbar from './components/Navbar';
 import CircularTracker from './components/CircularTracker';
-import QualityPage from './pages/Quality'; 
-import SafetyPage from './pages/Safety'; 
-import Health from './pages/Health'; 
+import QualityPage from './pages/Quality';
+import SafetyPage from './pages/Safety';
+import Health from './pages/Health';
 import LoginPage from './pages/LoginPage';
 import Delivery from './pages/Delivery';
 import Idea from './pages/Idea';
@@ -14,6 +14,7 @@ import HodDashboard from './pages/HodDashboard';
 import EHS from './pages/EHS';
 import Engineering from './pages/Engineering';
 import HR from './pages/HR';
+import QDSHIMonitor from './pages/QDSHIMonitor';
 import PivotPathLogo from './assest/pivotPathLogo.svg';
 
 import { DEPARTMENTS, MODULES, SPECIAL_DEPARTMENTS, ALL_DEPARTMENTS } from './departments';
@@ -38,7 +39,7 @@ const DEPT_BG = {
 const VALID_DEPTS = DEPARTMENTS.map(d => d.key);
 const VALID_MODULES = ['q', 'd', 's', 'h'];
 
-// ─────────────────────────────────────────────
+// ─────────────────────────────────────────────    
 // COMPONENT: CORE QDSH RING CONTAINER (LIVE DATA)
 // ─────────────────────────────────────────────
 const AgginementRingCard = ({ mod, onSelect, liveMetrics, loading }) => {
@@ -51,7 +52,7 @@ const AgginementRingCard = ({ mod, onSelect, liveMetrics, loading }) => {
   // Circular math for structural SVG ring representation
   const radius = 38;
   const circumference = 2 * Math.PI * radius;
-  
+
   const successOffset = circumference * (1 - successPercent / 100);
   const alertOffset = circumference * (1 - alertPercent / 100);
 
@@ -82,7 +83,7 @@ const AgginementRingCard = ({ mod, onSelect, liveMetrics, loading }) => {
             </div>
           </div>
         )}
-        
+
         <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
           <circle
             cx="50"
@@ -160,13 +161,13 @@ const Dashboard = () => {
       try {
         // Only set back to loading if it's the very first time running to avoid dashboard flashes during intervals
         if (!metrics) setLoading(true);
-        
+
         const response = await fetch(`${API}/api/metrics/global-pillars`);
-        
+
         if (!response.ok) {
           throw new Error(`HTTP network error status: ${response.status}`);
         }
-        
+
         const data = await response.json();
         setMetrics(data);
       } catch (error) {
@@ -200,7 +201,7 @@ const Dashboard = () => {
           </p>
         </div>
         <div className="hidden md:flex items-center gap-5 bg-white px-6 py-4 rounded-2xl border border-slate-100 shadow-sm">
-          <img src={PivotPathLogo} alt="PivotPath Logo" className="w-20 h-20 object-contain rounded-xl"/>
+          <img src={PivotPathLogo} alt="PivotPath Logo" className="w-20 h-20 object-contain rounded-xl" />
           <div>
             <h3 className="text-slate-900 font-bold text-sm">PivotPath Workspace</h3>
             <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Active Connectivity</p>
@@ -208,7 +209,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      
+
 
       {/* PRIMARY MODULE KPI TRACKERS SECTIONS */}
       <div className="mb-6 ">
@@ -217,12 +218,12 @@ const Dashboard = () => {
         </span>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {MODULES.map((mod) => (
-            <AgginementRingCard 
-              key={mod.key} 
-              mod={mod} 
+            <AgginementRingCard
+              key={mod.key}
+              mod={mod}
               liveMetrics={metrics ? metrics[mod.key] : null}
               loading={loading}
-              onSelect={(moduleKey) => navigate(`/portal/pillar/${moduleKey}`)} 
+              onSelect={(moduleKey) => navigate(`/portal/pillar/${moduleKey}`)}
             />
           ))}
         </div>
@@ -246,7 +247,7 @@ const Dashboard = () => {
           <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 block mb-1">Assigned Security Clearance</span>
           <span className="text-sm font-black text-slate-700 uppercase">Enterprise Standard User Profile</span>
         </div>
-        
+
       </div>
       <div className="mb-8">
         <span className="text-[10px] lg:text-xs font-black uppercase tracking-[0.3em] text-slate-400 block mb-3 mt-3">
@@ -284,8 +285,8 @@ const PillarDepartmentsPage = () => {
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 pb-6 border-b border-slate-200">
           <div>
-            <button 
-              onClick={() => navigate('/')} 
+            <button
+              onClick={() => navigate('/')}
               className="text-xs font-bold text-slate-400 hover:text-slate-900 mb-2 transition-colors block"
             >
               ← Return Dashboard Focus
@@ -318,7 +319,7 @@ const PillarDepartmentsPage = () => {
                   {dept.name}
                 </h2>
               </div>
-              
+
               <div className="flex items-center justify-between relative z-10">
                 <span className="text-[9px] font-bold uppercase tracking-wider bg-black/10 px-2 py-1 rounded-md">Open Tracker</span>
                 <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-xs group-hover:translate-x-1 transition-transform">→</div>
@@ -339,7 +340,7 @@ const DeptRoute = ({ user }) => {
   const { dept } = useParams();
   if (!user) return <Navigate to="/login" />;
   if (!VALID_DEPTS.includes(dept)) return <Navigate to="/" />;
-  return <Navigate to={`/${dept}/q`} />; 
+  return <Navigate to={`/${dept}/q`} />;
 };
 
 const ShiftPickerRoute = ({ user }) => {
@@ -350,17 +351,17 @@ const ShiftPickerRoute = ({ user }) => {
 };
 
 const ModuleRoute = ({ user }) => {
-  const { shift, dept, module } = useParams(); 
+  const { shift, dept, module } = useParams();
   if (!user) return <Navigate to="/login" />;
-  if (!['1','2','3'].includes(shift) || !VALID_DEPTS.includes(dept) || !VALID_MODULES.includes(module)) {
+  if (!['1', '2', '3'].includes(shift) || !VALID_DEPTS.includes(dept) || !VALID_MODULES.includes(module)) {
     return <Navigate to="/" />;
   }
   if (module === 'q') return <QualityPage />;
   if (module === 'd') return <Delivery />;
   if (module === 's') return <SafetyPage />;
   if (module === 'h') return <Health />;
-  return <Navigate to="/" />;      
-}; 
+  return <Navigate to="/" />;
+};
 
 // ─────────────────────────────────────────────
 // CENTRAL ENTRY APPLICATION
@@ -392,6 +393,7 @@ function App() {
           <Route path="/ehs" element={user ? <EHS /> : <Navigate to="/login" />} />
           <Route path="/engineering" element={user ? <Engineering /> : <Navigate to="/login" />} />
           <Route path="/hr" element={user ? <HR /> : <Navigate to="/login" />} />
+          <Route path="/monitor" element={user ? <QDSHIMonitor /> : <Navigate to="/login" />} />
           <Route path="/:dept" element={<DeptRoute user={user} />} />
           <Route path="/:dept/:module" element={<ShiftPickerRoute user={user} />} />
           <Route path="/shift/:shift/:dept/:module" element={<ModuleRoute user={user} />} />

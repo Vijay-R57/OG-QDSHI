@@ -53,6 +53,15 @@ router.post('/submit', async (req, res) => {
   }
 });
 
+router.get('/all', async (req, res) => {
+  try {
+    const records = await Ideation.find().sort({ submittedAt: -1 }).lean();
+    res.json(records);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/download', async (req, res) => {
   try {
     const records = await Ideation.find().sort({ submittedAt: -1 }).lean();

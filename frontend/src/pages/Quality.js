@@ -593,7 +593,6 @@ const QualityPage = () => {
 // --- SUB-COMPONENTS ---
 
 const LogTable = ({ title, icon, logs, isSuperAdmin, onAdd, onUpdate, onRemove, onChange, loading, theme }) => {
-  // Fix for Tailwind Dynamic classes: Map strings to constant class names
   const themeStyles = {
     emerald: {
       bg: 'bg-emerald-50/30',
@@ -609,16 +608,26 @@ const LogTable = ({ title, icon, logs, isSuperAdmin, onAdd, onUpdate, onRemove, 
 
   const style = themeStyles[theme] || themeStyles.emerald;
 
+  const handleAddRow = () => {
+    onAdd();
+    setTimeout(() => {
+      const scrollDiv = document.querySelector(`[data-log-table="${title}"]`);
+      if (scrollDiv) {
+        scrollDiv.scrollTop = 0;
+      }
+    }, 0);
+  };
+
   return (
-    <div className="bg-white rounded-[1.5rem] shadow-sm border border-slate-200 overflow-hidden flex flex-col min-h-[350px]">
-      <div className={`px-5 py-4 flex items-center justify-between border-b border-slate-50 ${style.bg}`}>
+    <div className="bg-white rounded-[1.5rem] shadow-md border-2 border-slate-200 overflow-hidden flex flex-col min-h-[400px]">
+      <div className={`px-5 py-4 flex items-center justify-between border-b-2 border-slate-100 ${style.bg}`}>
         <div className="flex items-center gap-2">
           {icon}
           <h3 className={`font-black text-[10px] ${style.text} tracking-widest uppercase`}>{title}</h3>
         </div>
         <div className="flex gap-2">
-          <button onClick={onAdd} className="bg-white border border-slate-200 px-3 py-1 rounded-lg text-[9px] font-black uppercase hover:bg-slate-50">Add Row</button>
-          <button onClick={onUpdate} disabled={loading} className={`px-4 py-1 rounded-lg text-[9px] font-black uppercase text-white shadow-sm transition-all ${loading ? 'bg-slate-300' : `${style.btn} active:scale-95`}`}>
+          <button onClick={handleAddRow} className="bg-white border border-slate-200 px-3 py-2 rounded-lg text-[9px] font-black uppercase hover:bg-slate-50 transition-all active:scale-95">Add Row</button>
+          <button onClick={onUpdate} disabled={loading} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase text-white shadow-sm transition-all ${loading ? 'bg-slate-300 cursor-not-allowed' : `${style.btn} active:scale-95 hover:shadow-md`}`}>
             {loading ? 'Syncing...' : 'Save Changes'}
           </button>
         </div>
@@ -632,13 +641,13 @@ const LogTable = ({ title, icon, logs, isSuperAdmin, onAdd, onUpdate, onRemove, 
         {isSuperAdmin && <span className="w-6"></span>}
       </div>
 
-      <div className="overflow-y-auto flex-1 p-4 divide-y divide-slate-100 custom-scrollbar">
+      <div className="overflow-y-auto flex-1 p-4 divide-y divide-slate-100 custom-scrollbar" data-log-table={title}>
         {logs.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center opacity-30 italic text-[10px] font-bold py-10">No records found</div>
+          <div className="h-full flex flex-col items-center justify-center opacity-30 italic text-[10px] font-bold py-10">No records found. Click "Add Row" to create one.</div>
         ) : logs.map((log, i) => (
-          <div key={i} className="py-2.5 flex gap-4 items-center group hover:bg-slate-50/50 rounded-lg transition-colors px-2">
+          <div key={i} className={`py-2.5 flex gap-4 items-center group rounded-lg transition-all px-2 ${i === 0 && (!log.id && !log.name && !log.action) ? 'bg-emerald-50/50 border-l-4 border-emerald-500 hover:bg-emerald-50/70' : 'hover:bg-slate-50/50'}`}>
             <input
-              className="w-20 text-[10px] font-bold text-slate-500 bg-slate-100/50 p-1.5 rounded border border-transparent focus:border-slate-300 outline-none"
+              className="w-20 text-[10px] font-bold text-slate-500 bg-slate-100/50 p-1.5 rounded border border-transparent focus:border-slate-300 outline-none transition-colors"
               value={log.id}
               onChange={(e) => onChange(i, 'id', e.target.value)}
             />
@@ -659,7 +668,7 @@ const LogTable = ({ title, icon, logs, isSuperAdmin, onAdd, onUpdate, onRemove, 
               <span className="text-[9px] font-black text-slate-400">{log.time}</span>
             </div>
             {isSuperAdmin && (
-              <button onClick={() => onRemove(i)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1"><Trash2 size={14} /></button>
+              <button onClick={() => onRemove(i)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50"><Trash2 size={14} /></button>
             )}
           </div>
         ))}

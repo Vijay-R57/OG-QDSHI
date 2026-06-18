@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { UserCircle, LogOut, LayoutDashboard, Settings2 } from 'lucide-react';
+import { UserCircle, LogOut, LayoutDashboard, Settings2, Monitor } from 'lucide-react';
 import logo from '../assest/pivotPathLogo.svg';
 
 const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -82,6 +82,12 @@ const Navbar = () => {
       <div className="flex items-center gap-3">
         {user ? (
           <>
+            <Link
+              to="/monitor"
+              className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-bold text-xs transition uppercase tracking-tighter"
+            >
+              <Monitor size={15} /> QDSHI Board
+            </Link>
             {user.role === 'superadmin' && (
               <Link
                 to="/admin"

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Plus, X, Save, ChevronLeft, ChevronRight, Lock, CheckCircle2, ShieldAlert, Clock, Download } from 'lucide-react';
+import { Plus, X, Save, ChevronLeft, ChevronRight, Lock, CheckCircle2, ShieldAlert, Clock, Download, Trash2 } from 'lucide-react';
 import axios from 'axios';
 // IST timezone helpers
 const getISTDate = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
@@ -10,6 +10,11 @@ const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const DEPT_FULL = { fg: 'Finished Good Material Warehouse', pm: 'Packing Material Warehouse', rm: 'Raw Material Warehouse' };
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+const THEME_STYLES = {
+  emerald: { bg: 'bg-emerald-600', text: 'text-emerald-800', light: 'bg-emerald-50/20', border: 'border-emerald-100' },
+  blue: { bg: 'bg-blue-600', text: 'text-blue-800', light: 'bg-blue-50/20', border: 'border-blue-100' }
+};
 
 const Health = () => {
   const { shift, dept } = useParams();
@@ -44,6 +49,14 @@ const Health = () => {
 
   // Time lock (replaces old cutoff system)
   const [timeLock, setTimeLock] = useState(null);
+
+  // New state for Staff and Activity Logs
+  const [staffLogs, setStaffLogs] = useState([]);
+  const [activityLogs, setActivityLogs] = useState([]);
+  const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
+  const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
+  const [tableSyncing, setTableSyncing] = useState({ staff: false, activity: false });
+  const [deleteConfig, setDeleteConfig] = useState({ isOpen: false, type: null, index: null });
 
   const showNotify = (msg, type = 'success') => {
     setNotification({ show: true, message: msg, type });
@@ -86,6 +99,23 @@ const Health = () => {
       .then(d => setTimeLock(d))
       .catch(() => {});
   }, [dept, shift]);
+
+  // Fetch metrics data for logs (H pillar)
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        const url = `${API}/api/metrics?shift=${shift || '1'}&dept=${dept || 'fg'}`;
+        const response = await fetch(url);
+        const dbData = await response.json();
+        if (dbData?.length > 0) {
+          const hLive = dbData.find(d => d.letter === 'H');
+          setStaffLogs(hLive?.staffLogs || []);
+          setActivityLogs(hLive?.activityLogs || []);
+        }
+      } catch (error) { console.error(error); }
+    };
+    fetchMetrics();
+  }, [shift, dept]);
 
   // --- helpers ---
 
@@ -173,6 +203,51 @@ const Health = () => {
     setIsModalOpen(true);
   };
 
+  const handleLogSubmit = async (type) => {
+    setTableSyncing(prev => ({ ...prev, [type]: true }));
+    try {
+      const res = await fetch(`${API}/api/metrics/${type}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          letter: 'H', shift: shift || '1', dept: dept || 'fg',
+          logs: type === 'staff' ? staffLogs : activityLogs,
+          empId: user?.employeeId,
+          empName: user?.name,
+          userRole: user?.role,
+        }),
+      });
+      if (res.ok) {
+        type === 'staff' ? setIsStaffModalOpen(false) : setIsActivityModalOpen(false);
+      }
+    } catch (e) { showNotify("Sync failed", "error"); } finally { setTableSyncing(prev => ({ ...prev, [type]: false })); }
+  };
+
+  const handleDeleteLog = async () => {
+    const { type, index } = deleteConfig;
+    if (type === 'staff' || type === 'activity') {
+      const setter = type === 'staff' ? setStaffLogs : setActivityLogs;
+      const currentLogs = type === 'staff' ? staffLogs : activityLogs;
+      const updatedLogs = currentLogs.filter((_, i) => i !== index);
+
+      try {
+        const res = await fetch(`${API}/api/metrics/${type}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            letter: 'H', shift: shift || '1', dept: dept || 'fg', 
+            logs: updatedLogs,
+            empId: user?.employeeId,
+            empName: user?.name,
+            userRole: user?.role,
+          }),
+        });
+        if (res.ok) setter(updatedLogs);
+      } catch (e) { showNotify("Delete operation failed.", "error"); }
+    }
+    setDeleteConfig({ isOpen: false, type: null, index: null });
+  };
+
   const downloadCSV = () => {
     const days = allMonthsData[currentMonthName];
     const headers = ['Date', 'Month', 'Status', 'Key Points / Observations', 'Attendees', 'Total Strength', 'Attendance %'];
@@ -219,6 +294,29 @@ const Health = () => {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-900 flex flex-col">
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfig.isOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-[2.5rem] w-full max-w-[320px] p-8 shadow-2xl border border-white/20 text-center">
+            <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Trash2 size={28} />
+            </div>
+            <h3 className="text-slate-800 font-black uppercase text-sm tracking-widest mb-2">Confirm Delete</h3>
+            <p className="text-slate-400 text-[10px] font-bold uppercase leading-relaxed mb-8">
+              This action is permanent and will sync with the cloud database immediately.
+            </p>
+            <div className="space-y-3">
+              <button onClick={handleDeleteLog} className="w-full bg-rose-500 hover:bg-rose-600 py-4 rounded-2xl font-black text-white text-[11px] uppercase shadow-lg shadow-rose-100 transition-all active:scale-95">
+                Confirm Deletion
+              </button>
+              <button onClick={() => setDeleteConfig({ isOpen: false, type: null, index: null })} className="w-full text-[10px] font-black text-slate-400 uppercase tracking-widest py-2 hover:text-slate-600 transition-colors">
+                Nevermind
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Notification */}
       {notification.show && (
@@ -295,59 +393,64 @@ const Health = () => {
       </div>
 
       {/* GRID */}
-      <div ref={reportRef} className="flex-1 px-4 sm:px-6 pb-6">
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-5">
-        {allMonthsData[currentMonthName].map((item) => {
-          const isTimeLocked = isCurrentDay(item.date) && isOutsideTimeLock();
-          const isLocked     = (item.status && !isSuperAdmin) || !canUpdate || isTimeLocked;
+      <div ref={reportRef} className="flex-1 px-4 sm:px-6 pb-6 max-w-[1600px] mx-auto w-full">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-5 mb-6">
+          {allMonthsData[currentMonthName].map((item) => {
+            const isTimeLocked = isCurrentDay(item.date) && isOutsideTimeLock();
+            const isLocked     = (item.status && !isSuperAdmin) || !canUpdate || isTimeLocked;
 
-          let colorClass = 'bg-white border-slate-100 text-slate-400';
-          if (item.status === 'meeting')    colorClass = 'bg-emerald-500 text-white shadow-lg shadow-emerald-200 border-transparent';
-          if (item.status === 'no-meeting') colorClass = 'bg-rose-500 text-white shadow-lg shadow-rose-200 border-transparent';
-          if (item.status === 'holiday')    colorClass = 'bg-slate-800 text-white shadow-lg shadow-slate-300 border-transparent';
-          if (isTimeLocked && !item.status) colorClass = 'bg-amber-50 border-amber-200 text-amber-500';
+            let colorClass = 'bg-white border-slate-100 text-slate-400';
+            if (item.status === 'meeting')    colorClass = 'bg-emerald-500 text-white shadow-lg shadow-emerald-200 border-transparent';
+            if (item.status === 'no-meeting') colorClass = 'bg-rose-500 text-white shadow-lg shadow-rose-200 border-transparent';
+            if (item.status === 'holiday')    colorClass = 'bg-slate-800 text-white shadow-lg shadow-slate-300 border-transparent';
+            if (isTimeLocked && !item.status) colorClass = 'bg-amber-50 border-amber-200 text-amber-500';
 
-          const pct = item.status === 'meeting' ? calcAttendance(item.attendees, item.totalStrength) : null;
+            const pct = item.status === 'meeting' ? calcAttendance(item.attendees, item.totalStrength) : null;
 
-          return (
-            <div
-              key={item.date}
-              onClick={() => openEntryModal(item)}
-              className={`group relative cursor-pointer rounded-[2rem] h-40 p-5 transition-all duration-300 border-2 hover:scale-[1.03] flex flex-col justify-between ${colorClass} ${isLocked ? 'opacity-80' : ''}`}
-            >
-              <div className="flex justify-between items-start">
-                <span className="font-black text-2xl tracking-tighter">{item.date}</span>
-                {isLocked
-                  ? <Lock size={16} className="opacity-40"/>
-                  : isTimeLocked
-                    ? <Clock size={16} className="text-amber-400"/>
-                    : <Plus size={16} className="opacity-0 group-hover:opacity-100 transition-opacity"/>
-                }
+            return (
+              <div
+                key={item.date}
+                onClick={() => openEntryModal(item)}
+                className={`group relative cursor-pointer rounded-[2rem] h-40 p-5 transition-all duration-300 border-2 hover:scale-[1.03] flex flex-col justify-between ${colorClass} ${isLocked ? 'opacity-80' : ''}`}
+              >
+                <div className="flex justify-between items-start">
+                  <span className="font-black text-2xl tracking-tighter">{item.date}</span>
+                  {isLocked
+                    ? <Lock size={16} className="opacity-40"/>
+                    : isTimeLocked
+                      ? <Clock size={16} className="text-amber-400"/>
+                      : <Plus size={16} className="opacity-0 group-hover:opacity-100 transition-opacity"/>
+                  }
+                </div>
+                <div className="overflow-hidden">
+                  {item.status ? (
+                    <div className="space-y-0.5">
+                      <p className="text-[10px] font-black uppercase leading-tight truncate tracking-wide">{item.keypoints || item.status}</p>
+                      {item.status === 'meeting' && (
+                        <div className="space-y-0.5">
+                          {item.attendees != null && item.totalStrength != null && (
+                            <p className="text-[9px] font-bold opacity-80">{item.attendees}/{item.totalStrength}</p>
+                          )}
+                          {pct != null && <p className="text-[10px] font-bold opacity-80 italic">{pct}%</p>}
+                        </div>
+                      )}
+                    </div>
+                  ) : isTimeLocked ? (
+                    <p className="text-[9px] font-black uppercase tracking-widest opacity-60">Outside save window</p>
+                  ) : (
+                    <div className="h-1 w-8 bg-slate-100 rounded-full group-hover:w-12 transition-all"></div>
+                  )}
+                </div>
               </div>
-              <div className="overflow-hidden">
-                {item.status ? (
-                  <div className="space-y-0.5">
-                    <p className="text-[10px] font-black uppercase leading-tight truncate tracking-wide">{item.keypoints || item.status}</p>
-                    {item.status === 'meeting' && (
-                      <div className="space-y-0.5">
-                        {item.attendees != null && item.totalStrength != null && (
-                          <p className="text-[9px] font-bold opacity-80">{item.attendees}/{item.totalStrength}</p>
-                        )}
-                        {pct != null && <p className="text-[10px] font-bold opacity-80 italic">{pct}%</p>}
-                      </div>
-                    )}
-                  </div>
-                ) : isTimeLocked ? (
-                  <p className="text-[9px] font-black uppercase tracking-widest opacity-60">Outside save window</p>
-                ) : (
-                  <div className="h-1 w-8 bg-slate-100 rounded-full group-hover:w-12 transition-all"></div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
 
+        {/* TEAM & STAFF COMPLIANCE and OPERATIONAL LOGS */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-2">
+          <LogContainer title="Team & Staff Compliance" data={staffLogs} type="staff" onOpen={() => { if (!canUpdate) return; setIsStaffModalOpen(true); }} setDeleteConfig={setDeleteConfig} colorTheme="emerald" />
+          <LogContainer title="Operational Quality Logs" data={activityLogs} type="activity" onOpen={() => { if (!canUpdate) return; setIsActivityModalOpen(true); }} setDeleteConfig={setDeleteConfig} colorTheme="blue" />
+        </div>
       </div>{/* end grid wrapper */}
 
       {/* Floating All-Shifts CSV download button */}
@@ -359,7 +462,7 @@ const Health = () => {
         <Download size={22} />
       </button>
 
-      {/* MODAL */}
+      {/* Entry Modal */}
       {isModalOpen && canUpdate && (
         <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-md flex items-center justify-center p-4 z-[100] animate-in fade-in duration-300">
           <div className="bg-white rounded-[2.5rem] shadow-[0_40px_100px_rgba(0,0,0,0.25)] w-full max-w-md overflow-hidden transform animate-in zoom-in-95 duration-300">
@@ -461,6 +564,111 @@ const Health = () => {
           </div>
         </div>
       )}
+
+      {/* --- Log Modals --- */}
+      <LogEntryModal isOpen={isStaffModalOpen} onClose={() => setIsStaffModalOpen(false)} title="Team Compliance" type="staff" data={staffLogs} 
+        onAdd={() => setStaffLogs([{id:"", name:"", action:"", time: getISTTime()}, ...staffLogs])}
+        onEdit={(i, f, v) => setStaffLogs(prev => { let u = [...prev]; u[i][f] = v; return u; })}
+        setDeleteConfig={setDeleteConfig} onSubmit={() => handleLogSubmit('staff')} syncing={tableSyncing.staff} />
+
+      <LogEntryModal isOpen={isActivityModalOpen} onClose={() => setIsActivityModalOpen(false)} title="Operational Activity" type="activity" data={activityLogs} 
+        onAdd={() => setActivityLogs([{id:"", name:"", action:"", time: getISTTime()}, ...activityLogs])}
+        onEdit={(i, f, v) => setActivityLogs(prev => { let u = [...prev]; u[i][f] = v; return u; })}
+        setDeleteConfig={setDeleteConfig} onSubmit={() => handleLogSubmit('activity')} syncing={tableSyncing.activity} />
+
+    </div>
+  );
+};
+
+// --- Reusable Log Subcomponents ---
+
+const TableContent = ({ data, type, onEdit, readonly, setDeleteConfig }) => {
+  const isStaff = type === 'staff';
+  return (
+    <div className="flex flex-col flex-1 overflow-hidden">
+      <div className="overflow-x-auto flex-1 flex flex-col">
+        <div className="min-w-[360px] flex flex-col flex-1">
+          <div className="px-3 sm:px-8 py-3 bg-slate-50 grid grid-cols-5 text-[9px] font-black text-slate-400 uppercase border-b border-slate-100 shrink-0">
+            <span className="truncate">ID</span><span className="truncate">Name</span><span className="col-span-2 truncate">Details</span><span className="text-right truncate">Del</span>
+          </div>
+          <div className="flex-1 overflow-y-auto divide-y divide-slate-50">
+            {data.length === 0 ? (
+              <div className="p-8 text-center text-slate-300 text-[10px] font-bold">No entries yet. Click "+ New Entry" to add one.</div>
+            ) : (
+              data.map((log, i) => (
+                <div key={i} className={`grid grid-cols-5 py-3 items-center group px-3 sm:px-8 transition-colors ${i === 0 && (!log.id && !log.name && !log.action) ? 'bg-emerald-50/40 border-l-4 border-emerald-500' : 'hover:bg-slate-50/50'}`}>
+                  <input disabled={readonly} className={`text-[10px] font-black bg-transparent outline-none truncate mr-1 min-w-0 ${isStaff ? 'text-emerald-600' : 'text-blue-600'}`} value={log.id} onChange={(e) => onEdit && onEdit(i, 'id', e.target.value)} />
+                  <input disabled={readonly} className="text-[10px] font-bold text-slate-700 bg-transparent outline-none truncate mr-1 min-w-0" value={log.name} onChange={(e) => onEdit && onEdit(i, 'name', e.target.value)} />
+                  <div className="col-span-2 flex items-center gap-1 min-w-0 overflow-hidden">
+                    <input disabled={readonly} className="text-[9px] font-bold text-slate-400 uppercase bg-transparent outline-none min-w-0 truncate flex-1" value={log.action} onChange={(e) => onEdit && onEdit(i, 'action', e.target.value)} />
+                    <span className="text-[9px] text-slate-300 shrink-0">{log.time}</span>
+                  </div>
+                  <div className="text-right shrink-0">
+                    {!readonly && (
+                      <button onClick={() => setDeleteConfig({ isOpen: true, type, index: i })} className="p-1.5 text-slate-300 hover:text-rose-500 rounded-lg transition-colors"><Trash2 size={13}/></button>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const LogContainer = ({ title, data, type, onOpen, colorTheme, setDeleteConfig }) => {
+  const theme = THEME_STYLES[colorTheme];
+  return (
+    <div className="bg-white rounded-[2.5rem] shadow-md border-2 border-slate-200 overflow-hidden flex flex-col min-h-[400px]">
+      <div className={`px-8 py-5 flex justify-between items-center border-b-2 border-slate-100 ${theme.light}`}>
+        <h3 className={`font-black text-[11px] uppercase ${theme.text}`}>{title}</h3>
+        <button onClick={onOpen} className={`${theme.bg} text-white px-5 py-3 rounded-xl text-[10px] font-black uppercase shadow-md transition-all active:scale-95 hover:shadow-lg hover:scale-105 duration-200`}>Update</button>
+      </div>
+      <div className="flex-1 overflow-hidden flex flex-col">
+        <TableContent data={data.slice(0, 8)} type={type} readonly setDeleteConfig={setDeleteConfig} />
+      </div>
+      {data.length > 8 && (
+        <div className="px-8 py-3 bg-slate-50 border-t border-slate-100 text-center">
+          <p className="text-[9px] font-black text-slate-400 uppercase">+{data.length - 8} more records</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const LogEntryModal = ({ isOpen, onClose, title, type, data, onAdd, onEdit, onSubmit, syncing, setDeleteConfig }) => {
+  const tableRef = useRef(null);
+  if (!isOpen) return null;
+  const theme = THEME_STYLES[type === 'staff' ? 'emerald' : 'blue'];
+
+  const handleAddNewEntry = () => {
+    onAdd();
+    setTimeout(() => {
+      if (tableRef.current) {
+        tableRef.current.scrollTop = 0;
+      }
+    }, 0);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[120] flex items-center justify-center p-4">
+      <div className="bg-white rounded-[2.5rem] w-full max-w-3xl flex flex-col h-[85vh] shadow-2xl">
+        <div className={`p-8 border-b flex justify-between items-center ${theme.light}`}>
+          <h2 className={`font-black ${theme.text} uppercase text-[12px]`}>{title}</h2>
+          <button onClick={handleAddNewEntry} className={`${theme.bg} text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase shadow-lg transition-all active:scale-95 hover:shadow-xl`}>+ New Entry</button>
+        </div>
+        <div className="flex-1 overflow-y-auto" ref={tableRef}>
+          <TableContent data={data} type={type} onEdit={onEdit} setDeleteConfig={setDeleteConfig} />
+        </div>
+        <div className="p-8 border-t flex items-center gap-6">
+          <button onClick={onClose} className="font-black text-slate-400 text-[10px] uppercase">Discard</button>
+          <button onClick={onSubmit} className={`flex-1 ${theme.bg} text-white py-4 rounded-2xl font-black text-[11px] uppercase transition-all active:scale-95`}>
+            {syncing ? "Syncing..." : "Save and Push to Cloud"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

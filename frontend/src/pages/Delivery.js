@@ -269,7 +269,7 @@ const DeliveryPage = () => {
     };
 
     let updatedLogs = [...dData.issueLogs];
-    const idx = updatedLogs.findIndex(l => l.rawDate === customDate);
+    const idx = updatedLogs.findIndex(l => l.rawDate === customDate); 
     if (idx !== -1) updatedLogs[idx] = newEntry;
     else updatedLogs.push(newEntry);
 
