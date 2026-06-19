@@ -153,8 +153,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchLivePillarMetrics = async () => {
       try {
-        const response = await fetch(`${API}/api/metrics/global-pillars`);
-
+const response = await fetch('/api/metrics/global-pillars');
         if (!response.ok) {
           throw new Error(`HTTP network error status: ${response.status}`);
         }
