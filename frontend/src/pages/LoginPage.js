@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, Mail, Loader2, Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
+import logo from '../assest/pivotPathLogo.svg';
 
 const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -73,7 +74,7 @@ const LoginPage = () => {
           {/* Logo Section */}
           <div className="flex justify-center mb-6">
             <img 
-              src="/pivotPathLogo.svg" 
+              src={logo} 
               alt="PivotPath Logo" 
               className="h-24 w-auto object-contain"
             />

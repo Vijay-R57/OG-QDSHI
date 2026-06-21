@@ -96,11 +96,10 @@ const sendShiftMissedAlert = async ({ toEmails, ccEmails = [], recipientName, su
     <p style="color:#94a3b8;font-size:11px;margin:0;">
       This is an automated message from the PivotPath Quality Management System. Do not reply to this email.
     </p>
-  </div>
-</div>`;
+  </div>`;
 
   const mailOptions = {
-    from: process.env.SMTP_FROM || `"Arcolab QMS" <${process.env.SMTP_USER}>`,
+    from: process.env.SMTP_FROM || `"PivotPath QMS" <${process.env.SMTP_USER}>`,
     to:   toEmails.join(', '),
     subject,
     html,

@@ -23,10 +23,10 @@ const ShiftPickerPage = ({ dept, module }) => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        transition={{ duration: 0.4 }} 
         className="text-center mb-8"
       >
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Arcolab QDSHI Tracker</p>
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">PivotPath Huddles Tracker</p>
         <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2 opacity-80">{deptInfo.name}</p>
         <h1 className="text-4xl font-black text-slate-800 uppercase tracking-tight">{moduleInfo.label}</h1>
         <div className="w-12 h-1 bg-slate-200 mx-auto mt-4 rounded-full" />

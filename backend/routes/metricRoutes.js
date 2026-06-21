@@ -109,7 +109,7 @@ router.get('/global-pillars', async (req, res) => {
       // ignore health aggregation failures and keep metric-derived values
       console.error('Health aggregation error:', err.message);
     }
-
+ 
     Object.values(pillars).forEach(pillar => {
       const total = pillar.totalAlerts + pillar.totalSuccess;
       pillar.successPercent = total ? Math.round((pillar.totalSuccess / total) * 100) : 100;

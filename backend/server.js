@@ -244,4 +244,4 @@ if (!process.env.VERCEL) {
 }
 
 // ✅ Required for Vercel serverless deployment
-module.exports = app;
+module.exports = app;
