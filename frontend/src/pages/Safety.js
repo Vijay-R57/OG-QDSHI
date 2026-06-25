@@ -16,7 +16,7 @@ const getISTTime = () => new Date().toLocaleTimeString('en-GB', { timeZone: 'Asi
 const API_BASE_URL = `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/metrics`;
 const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-const DEPT_FULL = { fg: 'Finished Good Material Warehouse', pm: 'Packing Material Warehouse', rm: 'Raw Material Warehouse' };
+const DEPT_FULL = { fgmw: 'Finished Good Material Warehouse', pmw: 'Packing Material Warehouse', rmw: 'Raw Material Warehouse' };
 
 const THEME_STYLES = {
   emerald: { bg: 'bg-emerald-600', text: 'text-emerald-800', light: 'bg-emerald-50/20', border: 'border-emerald-100' },
@@ -60,7 +60,7 @@ const SafetyPage = () => {
   const [deleteConfig, setDeleteConfig] = useState({ isOpen: false, type: null, index: null, rawDate: null });
 
   useEffect(() => {
-    fetch(`${API}/api/timelock/${dept || 'fg'}/${shift || '1'}`)
+    fetch(`${API}/api/timelock/${dept || 'fgmw'}/${shift || '1'}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => setTimeLock(d))
       .catch(() => {});
@@ -75,7 +75,7 @@ const SafetyPage = () => {
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        const url = `${API_BASE_URL}?shift=${shift || '1'}&dept=${dept || 'fg'}`;
+        const url = `${API_BASE_URL}?shift=${shift || '1'}&dept=${dept || 'fgmw'}`;
         const response = await fetch(url);
         const dbData = await response.json();
         if (dbData?.length > 0) {
@@ -203,7 +203,7 @@ const SafetyPage = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          letter: 'S', shift: shift || '1', dept: dept || 'fg',
+          letter: 'S', shift: shift || '1', dept: dept || 'fgmw',
           logs: type === 'staff' ? staffLogs : activityLogs,
           empId: user?.employeeId,
           empName: user?.name,
@@ -219,8 +219,21 @@ const SafetyPage = () => {
   };
 
   const handleDeleteLog = async () => {
-    const { type, index } = deleteConfig;
-    if (type === 'staff' || type === 'activity') {
+    const { type, index, rawDate } = deleteConfig;
+    if (type === 'record') {
+      const updatedLogs = sData.issueLogs.filter(log => log.rawDate !== rawDate);
+      try {
+        const res = await fetch(`${API_BASE_URL}/update`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ letter: 'S', shift: shift || '1', dept: dept || 'fgmw', name: 'Safety', issueLogs: updatedLogs, empId: user?.employeeId, empName: user?.name, userRole: user?.role })
+        });
+        if (res.ok) {
+          const saved = await res.json();
+          setMetrics(prev => prev.map(m => m.letter === 'S' ? saved : m));
+        }
+      } catch (e) { alert("Delete operation failed."); }
+    } else if (type === 'staff' || type === 'activity') {
       const setter = type === 'staff' ? setStaffLogs : setActivityLogs;
       const currentLogs = type === 'staff' ? staffLogs : activityLogs;
       const updatedLogs = currentLogs.filter((_, i) => i !== index);
@@ -230,7 +243,7 @@ const SafetyPage = () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            letter: 'S', shift: shift || '1', dept: dept || 'fg', 
+            letter: 'S', shift: shift || '1', dept: dept || 'fgmw', 
             logs: updatedLogs,
             empId: user?.employeeId,
             empName: user?.name,
@@ -398,6 +411,7 @@ const SafetyPage = () => {
                     <th className="p-2 text-center font-black text-slate-400">UNSAFE ACTS</th>
                     <th className="p-2 text-center font-black text-slate-400">AFFECTED</th>
                     <th className="p-2 text-center font-black text-slate-400">SEVERITY</th>
+                    <th className="p-2 text-right font-black text-slate-400">ACTION</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -419,6 +433,11 @@ const SafetyPage = () => {
                         <td className="p-2 text-center">
                           {isGreen ? (<span className="text-slate-300 font-bold">--</span>) : (
                             <span className={`font-black text-[10px] px-2 py-0.5 rounded-full ${log.severity === 'High' ? 'bg-red-100 text-red-600' : log.severity === 'Medium' ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-500'}`}>{log.severity}</span>
+                          )}
+                        </td>
+                        <td className="p-2 text-right">
+                          {isSuperAdmin && (
+                            <button onClick={() => setDeleteConfig({ isOpen: true, type: 'record', index: i, rawDate: log.rawDate })} className="text-red-300 hover:text-red-600 p-1 transition-colors"><Trash2 size={16} /></button>
                           )}
                         </td>
                       </tr>

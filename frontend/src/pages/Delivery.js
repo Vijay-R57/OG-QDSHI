@@ -8,12 +8,12 @@ import { dashboardMetrics as initialData } from '../dashboardData';
 const API_BASE = `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/metrics`;
 const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const DEPT_FULL = { fg: 'Finished Good Warehouse', pm: 'Packing Material Warehouse', rm: 'Raw Material Warehouse', qcmad: 'QC & Microbiology & AD Lab', pro: 'Production', pop: 'Post Production', ppp: 'Primary Packing Production', spp: 'Secondary Packing Production', fac: 'Facilities' };
+const DEPT_FULL = { fgmw: 'Finished Good Warehouse', pmw: 'Packing Material Warehouse', rmw: 'Raw Material Warehouse', qcmad: 'QC & Microbiology & AD Lab', pro: 'Production', pop: 'Post Production', ppp: 'Primary Packing Production', spp: 'Secondary Packing Production', fac: 'Facilities' };
 
 // Department-specific Delivery metric labels per GMP document
 // delay*Type: 'time' = red if >0, unit=min | 'zero' = red if >0, unit=count/batches | 'pct' = red if <100, unit=%
 const DEPT_DELIVERY_LABELS = {
-  fg: {
+  fgmw: {
     planVsActual: 'Plan vs Actual Disposed',
     archiveTitle: 'Disposal Archives',
     targetLabel: 'Target Disposed', actualLabel: 'Actual Disposed',
@@ -22,7 +22,7 @@ const DEPT_DELIVERY_LABELS = {
     delay2Col: 'Shipments', delay2Ph: 'Delayed Shipments / Logistics (min)',
     delay2Unit: 'min', delay2Type: 'time',
   },
-  pm: {
+  pmw: {
     planVsActual: 'Plan vs Actual Dispensed',
     archiveTitle: 'Dispatch Archives',
     targetLabel: 'Target Dispensed', actualLabel: 'Actual Dispensed',
@@ -31,7 +31,7 @@ const DEPT_DELIVERY_LABELS = {
     delay2Col: 'PM QC Approval', delay2Ph: 'Delayed PM QC Approval (min)',
     delay2Unit: 'min', delay2Type: 'time',
   },
-  rm: {
+  rmw: {
     planVsActual: 'Plan vs Actual Dispensed',
     archiveTitle: 'Dispatch Archives',
     targetLabel: 'Target Dispensed', actualLabel: 'Actual Dispensed',
@@ -114,12 +114,12 @@ const DeliveryPage = () => {
   const reportRef = useRef(null);
 
   const activeShift = paramShift || user?.shift || '1';
-  const activeDept = paramDept || 'fg';
+  const activeDept = paramDept || 'fgmw';
 
   const userDepts = (user?.department || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
   const isAssignedDept = isSuperAdmin || userDepts.includes(activeDept.toLowerCase());
   const canEdit = (isSupervisor && isAssignedDept) || isSuperAdmin;
-  const deptLabels = DEPT_DELIVERY_LABELS[activeDept] || DEPT_DELIVERY_LABELS.fg;
+  const deptLabels = DEPT_DELIVERY_LABELS[activeDept] || DEPT_DELIVERY_LABELS.fgmw;
 
   // --- State ---
   const [currentTime, setCurrentTime] = useState(new Date());

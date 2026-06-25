@@ -8,7 +8,7 @@ const getISTTime = () => new Date().toLocaleTimeString('en-GB', { timeZone: 'Asi
 
 const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-const DEPT_FULL = { fg: 'Finished Good Material Warehouse', pm: 'Packing Material Warehouse', rm: 'Raw Material Warehouse' };
+const DEPT_FULL = { fgmw: 'Finished Good Material Warehouse', pmw: 'Packing Material Warehouse', rmw: 'Raw Material Warehouse' };
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 const THEME_STYLES = {
@@ -68,7 +68,7 @@ const Health = () => {
     const fetchMonthData = async () => {
       try {
         const { data } = await axios.get(`${API}/api/health`, {
-          params: { month: currentMonthName, year: currentYear, dept: dept || 'fg', shift: shift || '1' },
+          params: { month: currentMonthName, year: currentYear, dept: dept || 'fgmw', shift: shift || '1' },
         });
         if (data?.days?.length > 0) {
           setAllMonthsData(prev => ({ ...prev, [currentMonthName]: data.days }));
@@ -94,7 +94,7 @@ const Health = () => {
 
   // Fetch time lock for this dept+shift
   useEffect(() => {
-    fetch(`${API}/api/timelock/${dept || 'fg'}/${shift || '1'}`)
+    fetch(`${API}/api/timelock/${dept || 'fgmw'}/${shift || '1'}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => setTimeLock(d))
       .catch(() => {});
@@ -104,7 +104,7 @@ const Health = () => {
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        const url = `${API}/api/metrics?shift=${shift || '1'}&dept=${dept || 'fg'}`;
+        const url = `${API}/api/metrics?shift=${shift || '1'}&dept=${dept || 'fgmw'}`;
         const response = await fetch(url);
         const dbData = await response.json();
         if (dbData?.length > 0) {
@@ -210,7 +210,7 @@ const Health = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          letter: 'H', shift: shift || '1', dept: dept || 'fg',
+          letter: 'H', shift: shift || '1', dept: dept || 'fgmw',
           logs: type === 'staff' ? staffLogs : activityLogs,
           empId: user?.employeeId,
           empName: user?.name,
@@ -235,7 +235,7 @@ const Health = () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            letter: 'H', shift: shift || '1', dept: dept || 'fg', 
+            letter: 'H', shift: shift || '1', dept: dept || 'fgmw', 
             logs: updatedLogs,
             empId: user?.employeeId,
             empName: user?.name,

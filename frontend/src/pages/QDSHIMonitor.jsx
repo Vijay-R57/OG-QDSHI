@@ -155,6 +155,17 @@ export default function QDSHIMonitor() {
     const currentYear = targetDate.getFullYear();
     const currentMonthLong = targetDate.toLocaleString('default', { month: 'long' });
 
+    const [activeCarouselShift, setActiveCarouselShift] = useState('1');
+    const [isHovered, setIsHovered] = useState(false);
+
+    useEffect(() => {
+        if (isHovered) return;
+        const interval = setInterval(() => {
+            setActiveCarouselShift(prev => prev === '1' ? '2' : prev === '2' ? '3' : '1');
+        }, 5000); // 5 seconds carousel
+        return () => clearInterval(interval);
+    }, [isHovered]);
+
     const fetchData = async () => {
         try {
             const [metricsRes, h1, h2, h3] = await Promise.all([
@@ -189,59 +200,56 @@ export default function QDSHIMonitor() {
     const sData = metrics.find(m => m.letter === 'S') || {};
 
     // Q Rows
-    const qRows = Array.from({length: 31}, () => (['', '', '']));
-    ['1', '2', '3'].forEach((shift, sIdx) => {
-        const logs = qData.shifts?.[shift]?.issueLogs || [];
-        logs.forEach(log => {
-            const d = new Date(log.rawDate);
-            if (d.getMonth() === currentMonthIdx && d.getFullYear() === currentYear) {
-                const dayIdx = d.getDate() - 1;
-                if (dayIdx >= 0 && dayIdx < 31) {
-                    qRows[dayIdx][sIdx] = log.reason === 'Target Met' ? '✅' : 
-                                          log.deviationType === 'Human Error' ? 'HE' : 
-                                          log.deviationType === 'Process Error' ? 'PE' : '⚠️';
-                }
+    const qRows = Array.from({length: 31}, () => (['']));
+    const qLogs = qData.shifts?.[activeCarouselShift]?.issueLogs || [];
+    qLogs.forEach(log => {
+        const d = new Date(log.rawDate);
+        if (d.getMonth() === currentMonthIdx && d.getFullYear() === currentYear) {
+            const dayIdx = d.getDate() - 1;
+            if (dayIdx >= 0 && dayIdx < 31) {
+                qRows[dayIdx][0] = log.reason === 'Target Met' ? '✅' : 
+                                      log.deviationType === 'Human Error' ? 'HE' : 
+                                      log.deviationType === 'Process Error' ? 'PE' : '⚠️';
             }
-        });
+        }
     });
 
     // D Rows
     const dRows = Array.from({length: 31}, () => ({ plan: 0, actual: 0 }));
-    ['1', '2', '3'].forEach((shift) => {
-        const logs = dData.shifts?.[shift]?.issueLogs || [];
-        logs.forEach(log => {
-            const d = new Date(log.rawDate);
-            if (d.getMonth() === currentMonthIdx && d.getFullYear() === currentYear) {
-                const dayIdx = d.getDate() - 1;
-                if (dayIdx >= 0 && dayIdx < 31) {
-                    dRows[dayIdx].plan += Number(log.planned) || 0;
-                    dRows[dayIdx].actual += Number(log.dispatched) || 0;
-                }
+    const dLogs = dData.shifts?.[activeCarouselShift]?.issueLogs || [];
+    dLogs.forEach(log => {
+        const d = new Date(log.rawDate);
+        if (d.getMonth() === currentMonthIdx && d.getFullYear() === currentYear) {
+            const dayIdx = d.getDate() - 1;
+            if (dayIdx >= 0 && dayIdx < 31) {
+                dRows[dayIdx].plan += Number(log.planned) || 0;
+                dRows[dayIdx].actual += Number(log.dispatched) || 0;
             }
-        });
+        }
     });
 
     // S Rows
-    const sRows = Array.from({length: 31}, () => ({ nm: 0, fa: 0, lti: 0 }));
-    ['1', '2', '3'].forEach((shift) => {
-        const logs = sData.shifts?.[shift]?.issueLogs || [];
-        logs.forEach(log => {
-            const d = new Date(log.rawDate);
-            if (d.getMonth() === currentMonthIdx && d.getFullYear() === currentYear) {
-                const dayIdx = d.getDate() - 1;
-                if (dayIdx >= 0 && dayIdx < 31) {
-                    sRows[dayIdx].nm += Number(log.numNearMiss) || 0;
-                    sRows[dayIdx].lti += Number(log.numSafetyIncidents) || 0;
-                    // Note: First Aid is absent in current schema, defaulting to 0
-                }
+    const sRows = Array.from({length: 31}, () => null);
+    const sLogs = sData.shifts?.[activeCarouselShift]?.issueLogs || [];
+    sLogs.forEach(log => {
+        const d = new Date(log.rawDate);
+        if (d.getMonth() === currentMonthIdx && d.getFullYear() === currentYear) {
+            const dayIdx = d.getDate() - 1;
+            if (dayIdx >= 0 && dayIdx < 31) {
+                if (!sRows[dayIdx]) sRows[dayIdx] = { nm: 0, ua: 0, lti: 0 };
+                sRows[dayIdx].nm += Number(log.numNearMiss) || 0;
+                sRows[dayIdx].ua += Number(log.numUnsafeActs) || 0;
+                sRows[dayIdx].lti += Number(log.numSafetyIncidents) || 0;
             }
-        });
+        }
     });
 
     // H Rows
     const hRows = Array.from({length: 31}, () => ({ total: 0, absent: 0 }));
-    healthData.forEach(hRecord => {
-        const days = hRecord?.days || [];
+    // healthData array corresponds to [health1, health2, health3] roughly in order, but we can check the shift in the data
+    const activeHealthRecord = healthData.find(h => String(h.shift) === activeCarouselShift);
+    if (activeHealthRecord) {
+        const days = activeHealthRecord?.days || [];
         days.forEach(day => {
             const dayIdx = Number(day.date) - 1;
             if (dayIdx >= 0 && dayIdx < 31) {
@@ -251,7 +259,9 @@ export default function QDSHIMonitor() {
                 hRows[dayIdx].absent += (total - attendees);
             }
         });
-    });
+    }
+
+    const shiftDisplayName = activeCarouselShift === '1' ? 'Shift 1' : activeCarouselShift === '2' ? 'Shift 2' : 'Shift 3';
 
     // Helper functions for extracting issues and actions per pillar
     const getIssues = (letter) => {
@@ -298,6 +308,18 @@ export default function QDSHIMonitor() {
 
     return (
         <div className="qdshi-board-container relative">
+            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 flex gap-2">
+                {['1', '2', '3'].map(s => (
+                    <div 
+                        key={s} 
+                        onClick={() => setActiveCarouselShift(s)}
+                        className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest cursor-pointer transition-all ${activeCarouselShift === s ? 'bg-emerald-600 text-white shadow-lg scale-110' : 'bg-slate-200 text-slate-500 hover:bg-slate-300'}`}
+                    >
+                        Shift {s}
+                    </div>
+                ))}
+            </div>
+
             <div className="absolute top-4 right-4 z-10 flex gap-3">
                 <input 
                     type="month" 
@@ -316,7 +338,7 @@ export default function QDSHIMonitor() {
                 </select>
             </div>
 
-            <div className="qdshi-board-inner">
+            <div className="qdshi-board-inner" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
                 <div className="board-screw-bl"></div>
                 <div className="board-screw-br"></div>
                 
@@ -358,86 +380,95 @@ export default function QDSHIMonitor() {
                     {/* Row 1: Metrics / KPI */}
                     <div className="grid-cell row-label">Metrics / KPI</div>
                     <div className="grid-cell">
-                        <DailyTable 
-                            title="Major Metric: No. of repeat deviation" 
-                            metricHeader="Human error related deviations"
-                            subheaders={['Shift A', 'Shift B', 'Shift C']}
-                            colorClass="th-q-bg"
-                            rowsData={qRows}
-                            formatCell={(row, idx) => row[idx]}
-                            getCellClass={(row, idx) => {
-                                const val = row[idx];
-                                if (val === '✅') return 'bg-emerald-100 text-emerald-800';
-                                if (val === 'HE' || val === 'PE' || val === '⚠️') return 'bg-red-100 text-red-800';
-                                return '';
-                            }}
-                        />
+                        <div key={`q-${activeCarouselShift}`} className="carousel-fade h-full w-full">
+                            <DailyTable 
+                                title={`Major Metric: No. of repeat deviation (${shiftDisplayName})`} 
+                                metricHeader="Human error related deviations"
+                                subheaders={['Status']}
+                                colorClass="th-q-bg"
+                                rowsData={qRows}
+                                formatCell={(row, idx) => row[idx]}
+                                getCellClass={(row, idx) => {
+                                    const val = row[idx];
+                                    if (val === '✅') return 'bg-emerald-100 text-emerald-800';
+                                    if (val === 'HE' || val === 'PE' || val === '⚠️') return 'bg-red-100 text-red-800';
+                                    return '';
+                                }}
+                            />
+                        </div>
                     </div>
                     <div className="grid-cell">
-                        <DailyTable 
-                            title="Major Metric: Plan Vs Actual" 
-                            metricHeader="Delivery Plan Vs Actual"
-                            subheaders={['Plan', 'Actual', 'Var']}
-                            colorClass="th-d-bg"
-                            rowsData={dRows}
-                            formatCell={(row, idx) => {
-                                if (row.plan === 0 && row.actual === 0) return '';
-                                if (idx === 0) return row.plan;
-                                if (idx === 1) return row.actual;
-                                const diff = row.actual - row.plan;
-                                return <span className={diff >= 0 ? 'text-emerald-600' : 'text-red-500'}>{diff > 0 ? `+${diff}` : diff}</span>;
-                            }}
-                            getCellClass={(row, idx) => {
-                                if (row.plan === 0 && row.actual === 0) return '';
-                                if (idx === 2) {
+                        <div key={`d-${activeCarouselShift}`} className="carousel-fade h-full w-full">
+                            <DailyTable 
+                                title={`Major Metric: Plan Vs Actual (${shiftDisplayName})`} 
+                                metricHeader="Delivery Plan Vs Actual"
+                                subheaders={['Plan', 'Actual', 'Var']}
+                                colorClass="th-d-bg"
+                                rowsData={dRows}
+                                formatCell={(row, idx) => {
+                                    if (row.plan === 0 && row.actual === 0) return '';
+                                    if (idx === 0) return row.plan;
+                                    if (idx === 1) return row.actual;
                                     const diff = row.actual - row.plan;
-                                    return diff >= 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800';
-                                }
-                                return '';
-                            }}
-                        />
+                                    return <span className={diff >= 0 ? 'text-emerald-600' : 'text-red-500'}>{diff > 0 ? `+${diff}` : diff}</span>;
+                                }}
+                                getCellClass={(row, idx) => {
+                                    if (row.plan === 0 && row.actual === 0) return '';
+                                    if (idx === 2) {
+                                        const diff = row.actual - row.plan;
+                                        return diff >= 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800';
+                                    }
+                                    return '';
+                                }}
+                            />
+                        </div>
                     </div>
                     <div className="grid-cell">
-                        <DailyTable 
-                            title="Major Metric: No. of Safety Incidents" 
-                            metricHeader="Near Miss / First Aid / LTI"
-                            subheaders={['NM', 'FA', 'LTI']}
-                            colorClass="th-s-bg"
-                            rowsData={sRows}
-                            formatCell={(row, idx) => {
-                                if (row.nm === 0 && row.fa === 0 && row.lti === 0) return '';
-                                return idx === 0 ? row.nm : idx === 1 ? row.fa : <span className={row.lti > 0 ? 'text-red-500' : ''}>{row.lti}</span>;
-                            }}
-                            getCellClass={(row, idx) => {
-                                if (row.nm === 0 && row.fa === 0 && row.lti === 0) return '';
-                                if (idx === 0 && row.nm > 0) return 'bg-amber-100 text-amber-800'; // near miss warning
-                                if (idx === 2 && row.lti > 0) return 'bg-red-100 text-red-800'; // LTI critical
-                                if (idx === 2 && row.lti === 0) return 'bg-emerald-100 text-emerald-800'; // Zero LTI is good
-                                return '';
-                            }}
-                        />
+                        <div key={`s-${activeCarouselShift}`} className="carousel-fade h-full w-full">
+                            <DailyTable 
+                                title={`Major Metric: No. of Safety Incidents (${shiftDisplayName})`} 
+                                metricHeader="Near Miss / Unsafe Acts / LTI"
+                                subheaders={['NM', 'UA', 'LTI']}
+                                colorClass="th-s-bg"
+                                rowsData={sRows}
+                                formatCell={(row, idx) => {
+                                    if (!row) return '';
+                                    return idx === 0 ? row.nm : idx === 1 ? row.ua : <span className={row.lti > 0 ? 'text-red-500' : ''}>{row.lti}</span>;
+                                }}
+                                getCellClass={(row, idx) => {
+                                    if (!row) return '';
+                                    if (idx === 0 && row.nm > 0) return 'bg-amber-100 text-amber-800'; // near miss warning
+                                    if (idx === 1 && row.ua > 0) return 'bg-orange-100 text-orange-800'; // unsafe act warning
+                                    if (idx === 2 && row.lti > 0) return 'bg-red-100 text-red-800'; // LTI critical
+                                    if (idx === 2 && row.lti === 0) return 'bg-emerald-100 text-emerald-800'; // Zero LTI is good
+                                    return '';
+                                }}
+                            />
+                        </div>
                     </div>
                     <div className="grid-cell">
-                        <DailyTable 
-                            title="Major Metric: Absenteeism" 
-                            metricHeader="Health / Absenteeism Rate"
-                            subheaders={['Staff', 'Abs', '%']}
-                            colorClass="th-h-bg"
-                            rowsData={hRows}
-                            formatCell={(row, idx) => {
-                                if (row.total === 0) return '';
-                                if (idx === 0) return row.total;
-                                if (idx === 1) return row.absent;
-                                return ((row.absent / row.total) * 100).toFixed(1) + '%';
-                            }}
-                            getCellClass={(row, idx) => {
-                                if (row.total === 0) return '';
-                                if (idx === 1 || idx === 2) {
-                                    return row.absent > 0 ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800';
-                                }
-                                return '';
-                            }}
-                        />
+                        <div key={`h-${activeCarouselShift}`} className="carousel-fade h-full w-full">
+                            <DailyTable 
+                                title={`Major Metric: Absenteeism (${shiftDisplayName})`} 
+                                metricHeader="Health / Absenteeism Rate"
+                                subheaders={['Staff', 'Abs', '%']}
+                                colorClass="th-h-bg"
+                                rowsData={hRows}
+                                formatCell={(row, idx) => {
+                                    if (row.total === 0) return '';
+                                    if (idx === 0) return row.total;
+                                    if (idx === 1) return row.absent;
+                                    return ((row.absent / row.total) * 100).toFixed(1) + '%';
+                                }}
+                                getCellClass={(row, idx) => {
+                                    if (row.total === 0) return '';
+                                    if (idx === 1 || idx === 2) {
+                                        return row.absent > 0 ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800';
+                                    }
+                                    return '';
+                                }}
+                            />
+                        </div>
                     </div>
 
                     {/* Row 2: Issues / Challenges */}

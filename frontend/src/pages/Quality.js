@@ -19,7 +19,7 @@ const getISTTime = () => new Date().toLocaleTimeString('en-GB', { timeZone: 'Asi
 const MySwal = withReactContent(Swal);
 const API_BASE_URL = `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/metrics`;
 const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-const DEPT_FULL = { fg: 'Finished Good Material Warehouse', pm: 'Packing Material Warehouse', rm: 'Raw Material Warehouse' };
+const DEPT_FULL = { fgmw: 'Finished Good Material Warehouse', pmw: 'Packing Material Warehouse', rmw: 'Raw Material Warehouse' };
 
 const Toast = Swal.mixin({
   toast: true,
