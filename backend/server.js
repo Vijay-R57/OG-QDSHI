@@ -38,6 +38,9 @@ const { initWatchdogScheduler } = require('./utils/watchdogScheduler');
 
 const app = express();
 
+const helmet = require('helmet');
+app.use(helmet({ contentSecurityPolicy: false }));
+
 // ✅ Vercel path-prefix rewriting middleware
 app.use((req, res, next) => {
   if (process.env.VERCEL && !req.url.startsWith('/api')) {
