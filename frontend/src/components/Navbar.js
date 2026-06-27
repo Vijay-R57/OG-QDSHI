@@ -83,6 +83,12 @@ const Navbar = () => {
         {user ? (
           <>
             <Link
+              to="/plant-dashboard"
+              className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg font-bold text-xs transition uppercase tracking-tighter"
+            >
+              <LayoutDashboard size={15} /> Plant Dashboard
+            </Link>
+            <Link
               to="/monitor"
               className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-bold text-xs transition uppercase tracking-tighter"
             >

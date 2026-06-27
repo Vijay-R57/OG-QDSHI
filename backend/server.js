@@ -17,6 +17,7 @@ const hrRoutes           = require('./routes/hrRoutes');
 const timeLockRoutes     = require('./routes/timeLockRoutes');
 const loginLogRoutes     = require('./routes/loginLogRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const plantDashboardRoutes = require('./routes/plantDashboardRoutes');
 const { startShiftAlertJob } = require('./jobs/shiftAlertJob');
 const { initWatchdogScheduler } = require('./utils/watchdogScheduler');
 
@@ -42,6 +43,7 @@ app.use('/api/hr',           hrRoutes);
 app.use('/api/timelock',     timeLockRoutes);
 app.use('/api/loginlog',     loginLogRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/plant-dashboard', plantDashboardRoutes);
 
 // ✅ CENTRAL CONFIG (IMPORTANT — SAME AS FRONTEND)
 const DEPT_CONFIG = {
@@ -177,7 +179,7 @@ app.get(/^\/(?!api).*/, (req, res) => {
 // Graceful Shutdown
 process.on('SIGINT', async () => { 
   await mongoose.connection.close();
-  console.log('🛑 MongoDB connection closed');
+  console.log('🛑 MongoDB connection closed'); 
   process.exit(0);
 });
 

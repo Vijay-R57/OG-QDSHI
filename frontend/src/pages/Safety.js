@@ -9,7 +9,6 @@ import {
 } from 'recharts';
 import CircularTracker from '../components/CircularTracker';
 import { dashboardMetrics as initialData } from '../dashboardData';
-import PageLoader from '../components/PageLoader';
 
 const getISTDate = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 const getISTTime = () => new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: false });
@@ -27,6 +26,11 @@ const THEME_STYLES = {
 const SafetyPage = () => {
   const { shift, dept } = useParams();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = "Safety Department - QDSHI";
+    return () => { document.title = "PivotPath (QDSHI)"; };
+  }, []);
 
   const user = JSON.parse(localStorage.getItem('userInfo'));
   const isSuperAdmin = user?.role === 'superadmin';
@@ -273,8 +277,9 @@ const SafetyPage = () => {
     } catch { alert('Failed to download all-shifts data'); }
   };
 
+  if (loading) return <div className="h-screen flex items-center justify-center bg-white text-orange-600 font-black uppercase tracking-widest italic">PivotPath Safety Sync...</div>;
+
   return (
-    <PageLoader loading={loading}>
     <div ref={reportRef} className="min-h-screen bg-[#F0F4F8] text-[#334155] font-sans flex flex-col">
 
       {deleteConfig.isOpen && (
@@ -593,7 +598,6 @@ const SafetyPage = () => {
         </div>
       )}
     </div>
-    </PageLoader>
   );
 };
 
