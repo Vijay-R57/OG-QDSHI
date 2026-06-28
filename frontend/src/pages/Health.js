@@ -20,6 +20,11 @@ const Health = () => {
   const { shift, dept } = useParams();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    document.title = "Health Department - QDSHI";
+    return () => { document.title = "PivotPath (QDSHI)"; };
+  }, []);
+
   const user        = JSON.parse(localStorage.getItem('userInfo')) || { role: 'supervisor' };
   const isSuperAdmin = user.role === 'superadmin';
   const isSupervisor = user.role === 'supervisor';

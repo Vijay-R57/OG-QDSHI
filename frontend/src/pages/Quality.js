@@ -11,7 +11,6 @@ import {
   ResponsiveContainer, Cell, LineChart, Line
 } from 'recharts';
 import CircularTracker from '../components/CircularTracker';
-import PageLoader from '../components/PageLoader';
 import { dashboardMetrics as initialData } from '../dashboardData';
 // IST timezone helpers
 const getISTDate = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
@@ -30,10 +29,15 @@ const Toast = Swal.mixin({
   timerProgressBar: true,
 });
 
-const QualityPage = () => {
+export default function QualityPage() {
   const { shift, dept } = useParams();
   const navigate = useNavigate();
   const reportRef = useRef(null);
+
+  useEffect(() => {
+    document.title = "Quality Department - QDSHI";
+    return () => { document.title = "PivotPath (QDSHI)"; };
+  }, []);
 
   // Safely parse user info
   const user = useMemo(() => {
@@ -323,9 +327,15 @@ const QualityPage = () => {
       .sort((a, b) => new Date(b.rawDate) - new Date(a.rawDate));
   }, [qData.issueLogs, viewDate, viewYear]);
 
+  if (loading) return (
+    <div className="h-screen flex flex-col items-center justify-center bg-white gap-4">
+      <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className="text-emerald-600 font-black uppercase tracking-[0.3em] animate-pulse">Syncing PivotPath Data...</div>
+    </div>
+  );
+
   return (
-    <PageLoader loading={loading}>
-      <div className="min-h-screen bg-[#F0F4F8] text-[#334155] font-sans flex flex-col">
+    <div className="min-h-screen bg-[#F0F4F8] text-[#334155] font-sans flex flex-col">
       <nav className="flex justify-between items-center px-4 sm:px-6 py-3 bg-[#F0F4F8] sticky top-0 z-50">
         <button onClick={() => navigate('/')} className="flex items-center gap-1.5 text-[#475569] font-bold text-xs uppercase hover:text-emerald-600 transition-colors">
           <ChevronLeft size={18} /> <span className="hidden sm:inline">Back</span>
@@ -584,7 +594,6 @@ const QualityPage = () => {
         </div>
       )}
     </div>
-    </PageLoader>
   );
 };
 
@@ -700,5 +709,3 @@ const ChartCard = ({ title, children }) => (
     <div className="p-5 flex-1">{children}</div>
   </div>
 );
-
-export default QualityPage;   

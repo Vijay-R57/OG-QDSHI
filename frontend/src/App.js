@@ -15,6 +15,7 @@ import EHS from './pages/EHS';
 import Engineering from './pages/Engineering';
 import HR from './pages/HR';
 import QDSHIMonitor from './pages/QDSHIMonitor';
+import PlantDashboard from './pages/PlantDashboard';
 import PivotPathLogo from './assest/pivotPathLogo.svg';
 
 import { DEPARTMENTS, MODULES, SPECIAL_DEPARTMENTS, ALL_DEPARTMENTS } from './departments';
@@ -395,6 +396,7 @@ function App() {
           <Route path="/engineering" element={user ? <Engineering /> : <Navigate to="/login" />} />
           <Route path="/hr" element={user ? <HR /> : <Navigate to="/login" />} />
           <Route path="/monitor" element={user ? <QDSHIMonitor /> : <Navigate to="/login" />} />
+          <Route path="/plant-dashboard" element={user ? <PlantDashboard /> : <Navigate to="/login" />} />
           <Route path="/:dept" element={<DeptRoute user={user} />} />
           <Route path="/:dept/:module" element={<ShiftPickerRoute user={user} />} />
           <Route path="/shift/:shift/:dept/:module" element={<ModuleRoute user={user} />} />

@@ -108,6 +108,11 @@ const getISTTime = () => new Date().toLocaleTimeString('en-GB', { timeZone: 'Asi
 
 const DeliveryPage = () => {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = "Delivery Department - QDSHI";
+    return () => { document.title = "PivotPath (QDSHI)"; };
+  }, []);
   const { shift: paramShift, dept: paramDept } = useRParams();
   const user = JSON.parse(localStorage.getItem('userInfo') || 'null');
   const isSuperAdmin = user?.role === 'superadmin';

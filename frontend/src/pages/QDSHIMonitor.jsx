@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import './QDSHIMonitor.css';
+import { Search, ChevronDown, CheckCircle, Clock, AlertTriangle, Battery, Shield, Info, Activity } from 'lucide-react';
+import axios from 'axios';
+import logo from '../assest/pivotPathLogo.svg';
 
 const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -344,8 +347,7 @@ export default function QDSHIMonitor() {
                 <div className="flex flex-wrap board-header-info mb-4 items-center">
                     <div className="w-full md:w-3/12">
                         <div className="logo-placeholder">
-                            <span className="logo-icon">∞</span>
-                            <div className="logo-text">SOFTGEL<br/><small>HEALTHCARE PVT. LTD.</small></div>
+                            <img src={logo} alt="PivotPath Logo" className="h-10" />
                         </div>
                     </div>
                     <div className="w-full md:w-2/12 text-center">
