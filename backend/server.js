@@ -151,15 +151,60 @@ mongoose.connect(process.env.MONGO_URI)
       console.log('✅ Dropped legacy index');
     } catch (_) {}
 
-    // ── 2. MIGRATE OLD DEPT VALUES ────────────────────
+    // ── 2. MIGRATE OLD DEPT VALUES (SAFE MERGE) ───────
     for (const [oldDept, newDept] of Object.entries(OLD_TO_NEW_DEPT)) {
-      const res = await Metric.collection.updateMany(
-        { dept: oldDept },
-        { $set: { dept: newDept } }
-      );
+      for (const letter of LETTERS) {
+        const oldDoc = await Metric.findOne({ letter, dept: oldDept });
+        if (!oldDoc) continue;
 
-      if (res.modifiedCount > 0) {
-        console.log(`✅ Migrated ${res.modifiedCount} docs: ${oldDept} → ${newDept}`);
+        const newDoc = await Metric.findOne({ letter, dept: newDept });
+        if (newDoc) {
+          // Both exist, we must merge oldDoc into newDoc
+          console.log(`Merging metrics for ${letter} in ${oldDept} -> ${newDept}`);
+          const mergedShifts = JSON.parse(JSON.stringify(newDoc.shifts || { '1': {}, '2': {}, '3': {} }));
+          const oldShifts = oldDoc.shifts || {};
+          
+          for (const shiftKey of ['1', '2', '3']) {
+            if (!mergedShifts[shiftKey]) mergedShifts[shiftKey] = {};
+            const oldShift = oldShifts[shiftKey] || {};
+            const newShift = mergedShifts[shiftKey];
+            
+            newShift.alerts = (newShift.alerts || 0) + (oldShift.alerts || 0);
+            newShift.success = (newShift.success || 0) + (oldShift.success || 0);
+            
+            if (oldShift.daysData && Array.isArray(oldShift.daysData)) {
+              if (!newShift.daysData || !Array.isArray(newShift.daysData)) {
+                newShift.daysData = oldShift.daysData;
+              } else {
+                const maxLen = Math.max(newShift.daysData.length, oldShift.daysData.length);
+                for (let i = 0; i < maxLen; i++) {
+                  const newVal = newShift.daysData[i];
+                  const oldVal = oldShift.daysData[i];
+                  if (!newVal || newVal === 'none') {
+                    newShift.daysData[i] = oldVal || 'none';
+                  }
+                }
+              }
+            }
+            
+            const listFields = ['issueLogs', 'staffLogs', 'activityLogs'];
+            for (const field of listFields) {
+              if (oldShift[field] && Array.isArray(oldShift[field])) {
+                if (!newShift[field] || !Array.isArray(newShift[field])) {
+                  newShift[field] = oldShift[field];
+                } else {
+                  newShift[field] = [...newShift[field], ...oldShift[field]];
+                }
+              }
+            }
+          }
+          
+          await Metric.updateOne({ _id: newDoc._id }, { $set: { shifts: mergedShifts } });
+          await Metric.deleteOne({ _id: oldDoc._id });
+        } else {
+          // Only old document exists, rename department safely
+          await Metric.updateOne({ _id: oldDoc._id }, { $set: { dept: newDept, label: getLabel(letter, newDept) } });
+        }
       }
     }
 
