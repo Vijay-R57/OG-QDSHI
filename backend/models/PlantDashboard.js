@@ -18,6 +18,17 @@ const plantDashboardSchema = new mongoose.Schema({
   kpi: { type: String, required: true },
   uom: { type: String, default: '' },
   ytdAvg: { type: String, default: '' },
+  ytd: {
+    plan: {
+      value: { type: String, default: '' }
+    },
+    actual: {
+      value: { type: String, default: '' },
+      textColor: { type: String, default: 'black' },
+      arrowDir: { type: String, enum: ['up', 'down', 'none'], default: 'none' },
+      arrowColor: { type: String, enum: ['red', 'green', 'black'], default: 'black' }
+    }
+  },
   order: { type: Number, default: 0 },
   months: [monthSchema]
 });

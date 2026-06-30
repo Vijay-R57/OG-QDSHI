@@ -7,25 +7,17 @@ import logo from '../assest/pivotPathLogo.svg';
 const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 // Reusable Circle Component
-const DailyCircle = ({ letter, selectedMonthIdx, selectedYear }) => {
+const DailyCircle = ({ letter, selectedMonthIdx, selectedYear, colors }) => {
     const numDots = new Date(selectedYear, selectedMonthIdx + 1, 0).getDate();
     const center = 75;
     const dotRadius = 62;
-
-    const today = new Date();
-    const isCurrentMonth = today.getMonth() === selectedMonthIdx && today.getFullYear() === selectedYear;
 
     const dots = Array.from({ length: numDots }).map((_, i) => {
         const angle = (i / numDots) * 2 * Math.PI - Math.PI / 2;
         const cx = center + dotRadius * Math.cos(angle);
         const cy = center + dotRadius * Math.sin(angle);
         
-        let fill = '#fff';
-        if (isCurrentMonth) {
-            fill = i < today.getDate() ? '#28a745' : '#fff';
-        } else if (today > new Date(selectedYear, selectedMonthIdx + 1, 0)) {
-            fill = '#28a745'; // past months are all green
-        }
+        const fill = colors && colors[i] ? colors[i] : '#fff';
         
         return (
             <circle key={i} cx={cx} cy={cy} r={3.5} fill={fill} stroke="#555" strokeWidth="1" />
@@ -264,6 +256,49 @@ export default function QDSHIMonitor() {
 
     const shiftDisplayName = activeCarouselShift === '1' ? 'Shift 1' : activeCarouselShift === '2' ? 'Shift 2' : 'Shift 3';
 
+    const getColors = (rows, type) => {
+        const colors = Array(31).fill('#fff');
+        const today = new Date();
+        const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        
+        rows.forEach((row, idx) => {
+            const date = new Date(currentYear, currentMonthIdx, idx + 1);
+            if (date > todayDate) return;
+            
+            let isRed = false;
+            let hasData = false;
+            
+            if (type === 'Q') {
+                const val = row[0];
+                if (val === 'HE' || val === 'PE' || val === '⚠️') isRed = true;
+                if (val === '✅' || val === 'HE' || val === 'PE' || val === '⚠️') hasData = true;
+            } else if (type === 'D') {
+                if (row.plan > 0 || row.actual > 0) hasData = true;
+                if (row.actual < row.plan && row.plan > 0) isRed = true;
+            } else if (type === 'S') {
+                if (row) {
+                    hasData = true;
+                    if (row.nm > 0 || row.ua > 0 || row.lti > 0) isRed = true;
+                }
+            } else if (type === 'H') {
+                if (row.total > 0) hasData = true;
+                if (row.absent > 0) isRed = true;
+            }
+            
+            if (isRed) {
+                colors[idx] = '#dc3545'; // Red
+            } else if (hasData || date < todayDate) {
+                colors[idx] = '#28a745'; // Green
+            }
+        });
+        return colors;
+    };
+
+    const qColors = getColors(qRows, 'Q');
+    const dColors = getColors(dRows, 'D');
+    const sColors = getColors(sRows, 'S');
+    const hColors = getColors(hRows, 'H');
+
     // Helper functions for extracting issues and actions per pillar
     const getIssues = (letter) => {
         let issuesList = [];
@@ -372,10 +407,10 @@ export default function QDSHIMonitor() {
                 <div className="qdshi-grid">
                     {/* Row 0: Grid Headers (Circles) */}
                     <div className="grid-cell empty-cell flex justify-end items-center"></div>
-                    <div className="grid-cell"><DailyCircle letter="Q" selectedMonthIdx={currentMonthIdx} selectedYear={currentYear} /></div>
-                    <div className="grid-cell"><DailyCircle letter="D" selectedMonthIdx={currentMonthIdx} selectedYear={currentYear} /></div>
-                    <div className="grid-cell"><DailyCircle letter="S" selectedMonthIdx={currentMonthIdx} selectedYear={currentYear} /></div>
-                    <div className="grid-cell"><DailyCircle letter="H" selectedMonthIdx={currentMonthIdx} selectedYear={currentYear} /></div>
+                    <div className="grid-cell"><DailyCircle letter="Q" selectedMonthIdx={currentMonthIdx} selectedYear={currentYear} colors={qColors} /></div>
+                    <div className="grid-cell"><DailyCircle letter="D" selectedMonthIdx={currentMonthIdx} selectedYear={currentYear} colors={dColors} /></div>
+                    <div className="grid-cell"><DailyCircle letter="S" selectedMonthIdx={currentMonthIdx} selectedYear={currentYear} colors={sColors} /></div>
+                    <div className="grid-cell"><DailyCircle letter="H" selectedMonthIdx={currentMonthIdx} selectedYear={currentYear} colors={hColors} /></div>
 
                     {/* Row 1: Metrics / KPI */}
                     <div className="grid-cell row-label">Metrics / KPI</div>

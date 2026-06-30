@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const PlantDashboard = require('../models/PlantDashboard');
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTHS = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
 
 const INITIAL_KPIS = [
   { kpi: 'Energy Index (Kilo watts / Volume)', uom: 'Nos', order: 1 },
@@ -25,6 +25,17 @@ const INITIAL_KPIS = [
   { kpi: 'Cost per 1000 pills', uom: 'Rs.', order: 18 },
   { kpi: 'Lot Acceptance Rate', uom: 'Ratio', order: 19 }
 ];
+
+// Get all data for overall download
+router.get('/', async (req, res) => {
+  try {
+    const data = await PlantDashboard.find().sort({ year: -1, order: 1 });
+    res.json(data);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+});
 
 // Get data for a specific year, initializing if it doesn't exist
 router.get('/:year', async (req, res) => {

@@ -3,6 +3,7 @@ const express  = require('express');
 const mongoose = require('mongoose');
 const cors     = require('cors');
 const dns      = require('dns');
+const path     = require('path');
 
 if (!process.env.VERCEL) {
   try {
@@ -82,14 +83,13 @@ app.use(async (req, res, next) => {
 
 app.use('/api/metrics',      metricRoutes);
 app.use('/api/users',        userRoutes);
-
 app.use('/api/health',       healthRoutes);
 app.use('/api/ideation',     ideationRoutes);
-app.use('/api/ehs',           ehsRoutes);
-app.use('/api/engineering',   engineeringRoutes);
-app.use('/api/hr',            hrRoutes);
-app.use('/api/timelock',      timeLockRoutes);
-app.use('/api/loginlog',      loginLogRoutes);
+app.use('/api/ehs',          ehsRoutes);
+app.use('/api/engineering',  engineeringRoutes);
+app.use('/api/hr',           hrRoutes);
+app.use('/api/timelock',     timeLockRoutes);
+app.use('/api/loginlog',     loginLogRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/plant-dashboard', plantDashboardRoutes);
 
@@ -117,7 +117,6 @@ const TYPE_MAP = {
   I: 'Improvement'
 };
 
-
 // ✅ SMART LABEL
 const getLabel = (letter, dept) => {
   const deptName = DEPT_CONFIG[dept] || 'General';
@@ -131,7 +130,6 @@ const getLabel = (letter, dept) => {
   return `${deptName} ${type}`;
 };
 
-
 // 🔄 OLD → NEW DEPT MIGRATION MAP
 const OLD_TO_NEW_DEPT = {
   fg: 'fgmw',
@@ -140,7 +138,6 @@ const OLD_TO_NEW_DEPT = {
   pp: 'ppp'
 };
 
-
 mongoose.connect(process.env.MONGO_URI)
   .then(async () => {
     console.log('✅ MongoDB Connected');
@@ -148,13 +145,11 @@ mongoose.connect(process.env.MONGO_URI)
     const Metric = require('./models/Metrics');
     const Health = require('./models/Health');
 
-
     // ── 1. Drop old index ─────────────────────────────
     try {
       await Metric.collection.dropIndex('letter_1');
       console.log('✅ Dropped legacy index');
     } catch (_) {}
-
 
     // ── 2. MIGRATE OLD DEPT VALUES ────────────────────
     for (const [oldDept, newDept] of Object.entries(OLD_TO_NEW_DEPT)) {
@@ -168,60 +163,48 @@ mongoose.connect(process.env.MONGO_URI)
       }
     }
 
-
     // ── 3. FIX EMPTY / NULL DEPTS ─────────────────────
     await Metric.collection.updateMany(
       { $or: [{ dept: { $exists: false } }, { dept: null }, { dept: '' }] },
       { $set: { dept: 'fgmw' } }
     );
 
-
-    // ── 4. UPDATE LABELS (IMPORTANT) ──────────────────
+    // ── 4. UPDATE LABELS (FIXED TO PREVENT DUPLICATE KEY E11000 ERRORS) ──
     const allMetrics = await Metric.find();
-
     for (const m of allMetrics) {
       const newLabel = getLabel(m.letter, m.dept);
-
       if (m.label !== newLabel) {
-        m.label = newLabel;
-        await m.save();
+        // Target updates via explicit updateOne to sidestep active unique validation rules on save hooks
+        await Metric.updateOne({ _id: m._id }, { $set: { label: newLabel } });
       }
     }
-
     console.log('✅ Labels synced');
 
-
-    // ── 5. INITIALISE ALL (LETTER × DEPT) ─────────────
+    // ── 5. INITIALISE ALL (LETTER × DEPT) - FIXED VIA EXPLICIT PRE-CHECK EXCLUSION ──
     let created = 0;
-
     for (const letter of LETTERS) {
       for (const dept of Object.keys(DEPT_CONFIG)) {
-        const result = await Metric.collection.updateOne(
-          { letter, dept },
-          {
-            $setOnInsert: {
-              letter,
-              dept,
-              label: getLabel(letter, dept),
-              shifts: { '1': {}, '2': {}, '3': {} }
-            }
-          },
-          { upsert: true }
-        );
-
-        if (result.upsertedCount > 0) created++;
+        // Run an active existence lookup to completely eliminate upsert index friction
+        const alreadyExists = await Metric.exists({ letter, dept });
+        
+        if (!alreadyExists) {
+          await Metric.create({
+            letter,
+            dept,
+            label: getLabel(letter, dept),
+            shifts: { '1': {}, '2': {}, '3': {} }
+          });
+          created++;
+        }
       }
     }
-
     console.log(`✅ Initialised ${created} metric stubs`);
-
 
     // ── 6. HEALTH COLLECTION MIGRATION ────────────────
     await Health.collection.updateMany(
       { $or: [{ dept: 'COMMON' }, { dept: { $exists: false } }] },
       { $set: { dept: 'fgmw' } }
     );
-
     console.log('✅ Health migration done');
 
     // Start shift-missed-alert cron job
@@ -233,6 +216,17 @@ mongoose.connect(process.env.MONGO_URI)
   })
   .catch(err => console.error('❌ MongoDB error:', err.message));
 
+// Serve static frontend in production (only when not running on Vercel)
+if (!process.env.VERCEL) {
+  // ── SERVE STATIC FRONTEND ON PRODUCTION ────────────────
+  // Directs express to stream pre-compiled production UI layers
+  app.use(express.static(path.join(__dirname, '../frontend/build')));
+
+  // ✅ FIXED: Using a RegExp literal bypasses the strict string parsing constraints of path-to-regexp completely
+  app.get(/^\/(?!api).*/, (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
+  });
+}
 
 // Graceful Shutdown
 process.on('SIGINT', async () => {
@@ -241,8 +235,7 @@ process.on('SIGINT', async () => {
   process.exit(0);
 });
 
-
-// Local dev only — Vercel uses module.exports instead
+// Local dev only (or standard Node hosting like Render/Heroku) — Vercel uses module.exports instead
 if (!process.env.VERCEL) {
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
